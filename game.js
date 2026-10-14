@@ -13,24 +13,27 @@ const VH = 720;                 // altura virtual fixa
 let VW = 1280, scale = 1;       // largura virtual depende da tela
 let TOP = 0;                    // corte do céu em telas baixas (zoom)
 const GY = 612;                 // linha do chão (pés)
-const HOUSE_X = 13000;          // porta da casa da vovó
+const HOUSE_X = 19500;          // porta da casa da vovó
 const LEVEL_END = HOUSE_X + 420;
-const TOTAL = 100;
+const TOTAL = 100, TOTAL_BRIG = 50;
+const PS = 0.8;                 // velocidade das animações dos poderes (20% mais lentas)
 const SPEED = 270, JUMP = -960, GRAV = 2400;
-const WOLF_AT = [1700, 4100, 6500, 8900, 11200]; // onde o lobo aparece
-const SIGNS = [330, 4500, 8000, 11700];
+const WOLF_AT = [1700, 4400, 7300, 9900, 12600, 15300, 17800]; // onde o lobo aparece
+const SIGNS = [330, 5000, 9200, 12900, 18400];
 const TAU = Math.PI * 2;
 
 const BIOMES = [
-  { n: 'city',   x0: -1e9, x1: 2600 },
-  { n: 'park',   x0: 2600, x1: 5400 },
-  { n: 'field',  x0: 5400, x1: 7900 },
-  { n: 'forest', x0: 7900, x1: 10900 },
-  { n: 'meadow', x0: 10900, x1: 1e9 },
+  { n: 'city',   x0: -1e9, x1: 3600 },
+  { n: 'park',   x0: 3600, x1: 7000 },
+  { n: 'beach',  x0: 7000, x1: 10500 },
+  { n: 'field',  x0: 10500, x1: 13600 },
+  { n: 'forest', x0: 13600, x1: 16800 },
+  { n: 'meadow', x0: 16800, x1: 1e9 },
 ];
 const PAL = {
   city:   { top: '#7EC8F5', bot: '#D6F0FF', far: '#A9BED6', grass: '#7BC96F', path: '#D9D4CC', soil: '#8E8A84' },
   park:   { top: '#6EC3F2', bot: '#E3F6FF', far: '#9ED38E', grass: '#6CC25A', path: '#E2C08D', soil: '#8B5E3C' },
+  beach:  { top: '#4FC0F5', bot: '#E9F9FF', far: '#7FC8E8', grass: '#F7E3AE', path: '#F1D294', soil: '#E2B873' },
   field:  { top: '#79C7F7', bot: '#FFF3D6', far: '#B7D98A', grass: '#8CCB4E', path: '#E8C98E', soil: '#9A6A3E' },
   forest: { top: '#5FA8D9', bot: '#CFEBD9', far: '#5E9C78', grass: '#4E9A47', path: '#C9A574', soil: '#6E4B32' },
   meadow: { top: '#86CFFF', bot: '#FFE6F0', far: '#A8DC9A', grass: '#78CF6A', path: '#EBCB97', soil: '#8B5E3C' },
@@ -42,6 +45,10 @@ function hex(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >
 function rgb(a) { return `rgb(${a[0] | 0},${a[1] | 0},${a[2] | 0})`; }
 function lerpA(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
 function biomeIdx(x) { for (let i = 0; i < BIOMES.length; i++) if (x < BIOMES[i].x1) return i; return BIOMES.length - 1; }
+function beachW(x) {
+  const b = BIOMES[2];
+  return clamp(Math.min(x - (b.x0 - 350), (b.x1 + 350) - x) / 700, 0, 1);
+}
 function pal(x, key) {
   const i = biomeIdx(x), b = BIOMES[i], c = RGB[b.n][key], B = 350;
   if (i < BIOMES.length - 1 && b.x1 - x < B) return rgb(lerpA(c, RGB[BIOMES[i + 1].n][key], (B - (b.x1 - x)) / (2 * B)));
@@ -93,7 +100,7 @@ function drawCecilia(x, y, face, o) {
   const DENIM = '#4F7FD6', DENIM_D = '#3A63AE', IRIS = '#6B3E1F';
   ctx.save(); ctx.translate(x, y); ctx.scale(face, 1);
   if (o.hurt > 0 && Math.floor(G.t * 14) % 2) ctx.globalAlpha = 0.45;
-  const sit = o.pose === 'sit', air = o.air && !sit, mv = o.moving && !sit && !air;
+  const perch = o.pose === 'perch', sit = o.pose === 'sit' || perch, air = o.air && !sit, mv = o.moving && !sit && !air;
   const t = o.walk || 0, sw = mv ? Math.sin(t) * 0.6 : 0;
   ctx.translate(0, mv ? -Math.abs(Math.cos(t)) * 3 : 0);
 
@@ -104,7 +111,11 @@ function drawCecilia(x, y, face, o) {
 
   // pernas
   const shoe = (ex, ey) => { RR(ex - 6, ey - 2, 17, 9, 4, '#fff'); RR(ex - 6, ey + 5, 17, 3, 1.5, '#FF7AA2'); };
-  if (sit) {
+  if (perch) {
+    const dg = Math.sin(G.t * 9) * 0.15;
+    let e = limb(-4, -36, 24, -0.1 + dg, 10, C_SKIN_D); shoe(e[0], e[1]);
+    e = limb(3, -36, 24, 0.15 - dg, 10, C_SKIN); shoe(e[0], e[1]);
+  } else if (sit) {
     L(-4, -36, 14, -38, 10, C_SKIN_D); L(14, -38, 16, -18, 9, C_SKIN_D); shoe(16, -16);
     L(2, -36, 20, -36, 10, C_SKIN); L(20, -36, 22, -16, 9, C_SKIN); shoe(22, -14);
   } else {
@@ -160,7 +171,8 @@ function basket(x, y, count) {
 }
 
 // Dindo: adulto de ~1,70 m, ~73 kg
-function drawDindo(x, y, face, o) {
+// part: 'body' (tudo menos o braço da frente), 'arm' (só o braço da frente) ou nada (tudo)
+function drawDindo(x, y, face, o, part) {
   const SK = '#F2C9A8', SK_D = '#DDAA88', HAIR = '#E8C35A', HAIR_HI = '#F7DD8E', SHIRT = '#FFFFFF', SHIRT_D = '#E4E6EE', JEANS = '#3B5FA0', JEANS_D = '#2E4A7A';
   ctx.save(); ctx.translate(x, y); ctx.scale(face, 1);
   const t = o.anim || 0, run = o.run, sw = run ? Math.sin(t) * 0.85 : 0;
@@ -170,16 +182,17 @@ function drawDindo(x, y, face, o) {
     const k = limb(0, -95, 48, a, 17, col); const f = limb(k[0], k[1], 46, a - bend, 15, col);
     RR(f[0] - 9, f[1] - 4, 26, 11, 5, '#F4F4F4'); RR(f[0] - 9, f[1] + 4, 26, 4, 2, '#E63946');
   };
-  leg(-sw, JEANS_D); leg(sw, JEANS);
-  // inclinação do tronco
-  const lean = o.carry ? 0.22 : run ? 0.1 : 0;
-  ctx.translate(0, -95); ctx.rotate(lean); ctx.translate(0, 95);
   const arm = (a1, a2, col, sk) => {
     const e = limb(0, -164, 36, a1, 13, sk); limb(0, -164, 17, a1, 16, col);
     const h = limb(e[0], e[1], 33, a2, 11, sk); C(h[0], h[1], 7, sk); return h;
   };
-  // braço de trás
-  if (o.carry) arm(-0.9, -1.7, SHIRT_D, SK_D); else arm(-sw * 0.9, -sw * 0.9 + (run ? 1.1 : 0.15), SHIRT_D, SK_D);
+  const lean = o.carry ? 0 : run ? 0.1 : 0;
+  if (part !== 'arm') {
+  leg(-sw, JEANS_D); leg(sw, JEANS);
+  // inclinação do tronco
+  ctx.translate(0, -95); ctx.rotate(lean); ctx.translate(0, 95);
+  // braço de trás (nos ombros: segura a perninha dela)
+  if (o.carry) arm(2.5, -2.2, SHIRT_D, SK_D); else arm(-sw * 0.9, -sw * 0.9 + (run ? 1.1 : 0.15), SHIRT_D, SK_D);
   // tronco
   RR(-21, -176, 42, 86, 15, SHIRT); ctx.strokeStyle = '#C9CDD8'; ctx.lineWidth = 2; ctx.stroke();   // camiseta branca
   L(-6, -170, 6, -166, 3, '#C9CDD8');
@@ -196,6 +209,8 @@ function drawDindo(x, y, face, o) {
   E(29, -194, 4, 5, SK_D);
   if (o.yell) { E(21, -184, 6, 5.5, '#7a2a20'); E(21, -182, 4, 2, '#e57373'); }
   else arcS(20, -189, 7, 0.15 * Math.PI, 0.85 * Math.PI, 2.6, '#7a2a20');
+  } else { ctx.translate(0, -95); ctx.rotate(lean); ctx.translate(0, 95); }
+  if (part === 'body') { ctx.restore(); return; }
   // braço da frente
   if (o.stick) {
     const a1 = 2.5 + Math.sin(G.t * 9) * 0.25;
@@ -204,7 +219,7 @@ function drawDindo(x, y, face, o) {
     L(h[0] - Math.sin(sa) * 18, h[1] - Math.cos(sa) * 18, h[0] + Math.sin(sa) * 105, h[1] + Math.cos(sa) * 105, 9, '#8B5A2B');
     L(h[0] + Math.sin(sa) * 30, h[1] + Math.cos(sa) * 30, h[0] + Math.sin(sa) * 95, h[1] + Math.cos(sa) * 95, 2.5, '#A8743F');
     C(h[0], h[1], 7, SK);
-  } else if (o.carry) arm(-0.5, -1.5, SHIRT, SK);
+  } else if (o.carry) arm(2.5, -2.2, SHIRT, SK);
   else if (o.wave) arm(2.6 + Math.sin(G.t * 10) * 0.3, 2.9 + Math.sin(G.t * 10) * 0.4, SHIRT, SK);
   else arm(sw * 0.9, sw * 0.9 + (run ? 1.1 : 0.15), SHIRT, SK);
   ctx.restore();
@@ -290,6 +305,18 @@ function drawLayla(x, y, face, o) {
   ctx.restore();
 }
 
+// Patinete mágico (vem do céu brilhando)
+function drawScooter(x, y, glow) {
+  ctx.save(); ctx.translate(x, y);
+  if (glow) { C(0, -50, 70, 'rgba(255,240,150,.25)'); C(0, -50, 45, 'rgba(255,255,255,.3)'); }
+  L(-34, -12, 30, -12, 9, '#FF6FA8');                       // base
+  L(30, -12, 38, -96, 6, '#8E5BD6');                        // guidão
+  L(28, -96, 50, -96, 7, '#2B2D42');
+  for (const wx of [-30, 34]) { C(wx, -7, 9, '#2B2D42'); C(wx, -7, 4, '#FFD60A'); }
+  if (glow) for (let i = 0; i < 4; i++) star(Math.cos(G.t * 5 + i * 1.6) * 52, -50 + Math.sin(G.t * 5 + i * 1.6) * 40, 7, '#FFD60A', G.t * 4);
+  ctx.restore();
+}
+
 // Lobo Mau (cartunesco, nada assustador)
 function drawWolf(W) {
   const FUR = '#7D8597', FUR_D = '#5C6374', BELLY = '#D5D9E2';
@@ -298,6 +325,7 @@ function drawWolf(W) {
   shadow(W.x, 40);
   ctx.save(); ctx.translate(W.x, W.y); ctx.scale(W.face, 1);
   if (st === 'dizzy') { ctx.translate(0, -60); ctx.rotate(Math.sin(G.t * 6) * 0.12); ctx.translate(0, 60); }
+  if (st === 'spin') { ctx.translate(0, -100); ctx.rotate(W.rot); ctx.translate(0, 100); }
   ctx.translate(0, run ? -Math.abs(Math.cos(t)) * 5 : 0);
   // rabo
   ctx.save(); ctx.translate(-26, -78); ctx.rotate(-0.9 + Math.sin(G.t * (st === 'block' ? 6 : 12)) * 0.3);
@@ -320,7 +348,7 @@ function drawWolf(W) {
   E(hx + 30, hy + 8, 26, 13, FUR); E(hx + 30, hy + 14, 22, 7, BELLY);
   C(hx + 56, hy + 3, 7.5, '#222'); C(hx + 54, hy + 1, 2.2, '#777');
   // olhos
-  if (st === 'dizzy') {
+  if (st === 'dizzy' || st === 'spin') {
     for (const ex of [hx + 2, hx + 17]) { ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.beginPath(); for (let a = 0; a < 12; a += 0.4) { const r = a * 0.6; ctx.lineTo(ex + Math.cos(a + G.t * 8) * r, hy - 6 + Math.sin(a + G.t * 8) * r); } ctx.stroke(); }
   } else if (st === 'flee' || st === 'grab') {
     E(hx + 2, hy - 7, 7, 9, '#fff'); E(hx + 18, hy - 7, 7, 9, '#fff'); C(hx + 4, hy - 6, 3.2, '#222'); C(hx + 20, hy - 6, 3.2, '#222');
@@ -332,7 +360,7 @@ function drawWolf(W) {
   }
   // boca
   if (st === 'flee' || st === 'grab') { E(hx + 30, hy + 20, 9, 7, '#5a1f2a'); E(hx + 30, hy + 23, 6, 3, '#E57373'); }
-  else if (st === 'dizzy') arcS(hx + 30, hy + 24, 7, 1.15 * Math.PI, 1.85 * Math.PI, 2.5, '#333');
+  else if (st === 'dizzy' || st === 'spin') arcS(hx + 30, hy + 24, 7, 1.15 * Math.PI, 1.85 * Math.PI, 2.5, '#333');
   else { arcS(hx + 28, hy + 12, 14, 0.1 * Math.PI, 0.7 * Math.PI, 2.5, '#333'); poly([hx + 32, hy + 24, hx + 37, hy + 24, hx + 34.5, hy + 30], '#fff'); }
   if (st === 'flee') { E(hx - 14, hy - 20, 3, 5, '#7EC8F5'); E(hx - 20, hy - 6, 2.5, 4, '#7EC8F5'); }
   // braço da frente
@@ -340,7 +368,7 @@ function drawWolf(W) {
   const h = limb(4, -128, 46, fa, 12, FUR); C(h[0], h[1], 8, FUR);
   ctx.restore();
   // estrelinhas de tontura
-  if (st === 'dizzy') for (let i = 0; i < 3; i++) { const a = G.t * 4 + i * TAU / 3; star(W.x + Math.cos(a) * 34 + W.face * 12, W.y - 205 + Math.sin(a) * 9, 9, '#FFD60A', G.t * 3); }
+  if (st === 'dizzy' || st === 'spin') for (let i = 0; i < (st === 'spin' ? 5 : 3); i++) { const a = G.t * 4 + i * TAU / 3; star(W.x + Math.cos(a) * 34 + W.face * 12, W.y - 205 + Math.sin(a) * 9, 9, '#FFD60A', G.t * 3); }
 }
 
 // Vovó Marisa, a Vovó Querida
@@ -385,12 +413,45 @@ function drawBerry(x, y, s = 1) {
   ctx.restore();
 }
 
+// Brigadeiro (chocolate com granulado na forminha)
+function drawBrigadeiro(x, y, s = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  ctx.fillStyle = '#FF8FB8'; ctx.beginPath(); ctx.moveTo(-16, 2);
+  for (let i = 0; i <= 8; i++) ctx.lineTo(-16 + i * 4, 2 + (i % 2 ? 3 : 0));
+  ctx.lineTo(12, 16); ctx.lineTo(-12, 16); ctx.closePath(); ctx.fill();
+  L(-6, 6, -5, 15, 1.5, '#E0558E'); L(0, 6, 0, 15, 1.5, '#E0558E'); L(6, 6, 5, 15, 1.5, '#E0558E');
+  C(0, -6, 14, '#4A2617');
+  for (let i = 0; i < 16; i++) {                 // granulado
+    const a = hash(i * 3.1) * TAU, r = hash(i * 7.7) * 11, gx = Math.cos(a) * r, gy = -6 + Math.sin(a) * r;
+    ctx.save(); ctx.translate(gx, gy); ctx.rotate(hash(i) * 3); ctx.fillStyle = i % 3 ? '#2B140A' : '#7A4A2A'; ctx.fillRect(-2.5, -1, 5, 2); ctx.restore();
+  }
+  C(-5, -11, 3.5, 'rgba(255,255,255,.3)');
+  ctx.restore();
+}
+// caixinha de doce: base em y, 56x50
+function drawBox(x, y) {
+  ctx.save(); ctx.translate(x, y);
+  RR(-28, -50, 56, 50, 7, '#D9A066'); RR(-28, -50, 56, 10, 5, '#E8B47A'); RR(18, -50, 10, 50, 5, 'rgba(0,0,0,.08)');
+  RR(-5, -50, 10, 50, 2, '#FF6FA8'); RR(-28, -30, 56, 9, 2, '#FF6FA8');
+  E(-9, -54, 10, 6, '#FF6FA8', -0.4); E(9, -54, 10, 6, '#FF6FA8', 0.4); C(0, -53, 5, '#E0558E');
+  C(-15, -12, 8, '#4A2617'); C(15, -12, 8, '#4A2617');
+  for (const bx of [-15, 15]) for (let i = 0; i < 5; i++) RR(bx - 5 + i * 2.5, -16 + (i % 2) * 5, 3, 1.5, 0.5, '#2B140A');
+  ctx.restore();
+}
+function drawBoxes() {
+  for (const b of G.boxes) {
+    if (b.broken || b.x < G.cam - 60 || b.x > G.cam + VW + 60) continue;
+    drawBox(b.x, b.y + Math.sin(G.t * 2.5 + b.ph) * 3);
+  }
+  for (const p of G.pops) drawBrigadeiro(p.x, p.y, 1.3 * clamp(1.6 - p.t * 1.6, 0, 1));
+}
+
 // ---------- Cenário ----------
 const DECOR = { far: [], mid: [], near: [] };
 const TYPES = {
-  far:  { city: ['bld'], park: ['hill'], field: ['hill', 'hill', 'mill'], forest: ['pine', 'pine', 'hill'], meadow: ['hill'] },
-  mid:  { city: ['shop', 'shop', 'shop', 'tree'], park: ['tree', 'tree', 'tree2'], field: ['tree', 'hay', 'hay', 'tree2'], forest: ['pine', 'pine', 'tree2'], meadow: ['blossom', 'tree', 'blossom'] },
-  near: { city: ['lamp', 'bench', 'planter', 'hydrant', 'pot', 'lamp'], park: ['bush', 'flowers', 'bench', 'bush', 'flowers'], field: ['fence', 'sunflower', 'flowers', 'rock', 'fence'], forest: ['mushroom', 'log', 'fern', 'mushroom', 'fern', 'stump'], meadow: ['flowers', 'bush', 'flowers', 'butterfly'] },
+  far:  { city: ['bld'], park: ['hill'], beach: ['boat', 'ship', 'boat', 'island'], field: ['hill', 'hill', 'mill'], forest: ['pine', 'pine', 'hill'], meadow: ['hill'] },
+  mid:  { city: ['shop', 'shop', 'shop', 'tree'], park: ['tree', 'tree', 'tree2'], beach: ['palm', 'umbrella', 'palm', 'kiosk'], field: ['tree', 'hay', 'hay', 'tree2'], forest: ['pine', 'pine', 'tree2'], meadow: ['blossom', 'tree', 'blossom'] },
+  near: { city: ['lamp', 'bench', 'planter', 'hydrant', 'pot', 'lamp'], park: ['bush', 'flowers', 'bench', 'bush', 'flowers'], beach: ['castle', 'shells', 'ball', 'bucket', 'starfish'], field: ['fence', 'sunflower', 'flowers', 'rock', 'fence'], forest: ['mushroom', 'log', 'fern', 'mushroom', 'fern', 'stump'], meadow: ['flowers', 'bush', 'flowers', 'butterfly'] },
 };
 const P_LAYER = { far: 0.22, mid: 0.5, near: 1 };
 function genDecor() {
@@ -436,6 +497,17 @@ function drawDecor(d, layer) {
       case 'mill': E(0, 20, 200, 120, c); RR(-12, -190, 24, 90, 4, '#E8E4D8'); poly([-16, -190, 0, -214, 16, -190], '#C0392B');
         ctx.save(); ctx.translate(0, -195); ctx.rotate(G.t * 0.8); for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); RR(-4, 0, 8, 60, 3, '#FFFDF6'); } ctx.restore(); break;
       case 'pine': pine(220 + v * 120, c, c); break;
+      case 'boat': case 'ship': {
+        // barquinhos no horizonte do mar
+        ctx.save(); ctx.translate(0, -122 + Math.sin(G.t * 1.5 + d.lx) * 3); ctx.rotate(Math.sin(G.t * 1.2 + d.lx) * 0.04);
+        const big = d.type === 'ship', hc = ['#E63946', '#457B9D', '#F4A261', '#2A9D8F'][d.c % 4];
+        poly(big ? [-60, -14, 60, -14, 46, 6, -46, 6] : [-34, -8, 34, -8, 24, 6, -24, 6], hc);
+        if (big) { RR(-30, -34, 44, 20, 4, '#FFFDF6'); for (let i = 0; i < 3; i++) C(-20 + i * 14, -24, 3.5, '#7EC8F5'); RR(18, -46, 10, 16, 2, '#E63946'); }
+        else { L(0, -8, 0, -62, 3, '#6B4429'); poly([2, -60, 2, -12, 30, -12], '#FFFDF6'); poly([-2, -52, -2, -12, -22, -12], '#FFE8A3'); }
+        ctx.restore(); break;
+      }
+      case 'island': E(0, -112, 120, 26, '#7BBF6A'); E(0, -104, 130, 12, '#F1D294');
+        L(10, -130, 18, -190, 6, '#8B5A2B'); for (let i = 0; i < 5; i++) E(18 + Math.cos(i * 1.3 - 2.6) * 22, -192 + Math.sin(i * 1.3 - 2.6) * 8, 24, 7, '#2FA84F', i * 1.3 - 2.6); break;
     }
   } else if (layer === 'mid') {
     switch (d.type) {
@@ -453,6 +525,18 @@ function drawDecor(d, layer) {
       case 'blossom': roundTree(70, '#F7A1C4', '#FBC4DA', true); break;
       case 'hay': E(0, -34, 52, 38, '#E9C46A'); for (let i = -30; i <= 30; i += 15) arcS(i, -10, 30, 3.6, 4.6, 2, '#D4A84B'); break;
       case 'pine': pine(200 + v * 90, '#2D6A4F', '#40916C'); break;
+      case 'palm': {
+        ctx.strokeStyle = '#A0652E'; ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(30, -90, 14, -190); ctx.stroke();
+        for (let i = 0; i < 7; i++) { const a = -Math.PI + i * Math.PI / 6 + Math.sin(G.t + i) * 0.05; ctx.save(); ctx.translate(14, -190); ctx.rotate(a); E(46, 8, 48, 12, i % 2 ? '#2FA84F' : '#3DBE5C', 0.25); ctx.restore(); }
+        C(6, -182, 8, '#7B4B2A'); C(20, -180, 8, '#7B4B2A'); break;
+      }
+      case 'umbrella': {
+        L(0, 0, 0, -120, 5, '#EEE'); const cs = ['#E63946', '#FFFDF6', '#FFD60A'];
+        for (let i = 0; i < 6; i++) { ctx.fillStyle = cs[(i + d.c) % 3]; ctx.beginPath(); ctx.moveTo(0, -118); ctx.arc(0, -118, 80, Math.PI + i * Math.PI / 6, Math.PI + (i + 1) * Math.PI / 6); ctx.closePath(); ctx.fill(); }
+        RR(16, -34, 70, 10, 4, '#2A9D8F'); L(22, -24, 18, 0, 4, '#ccc'); L(80, -24, 84, 0, 4, '#ccc'); L(80, -34, 96, -70, 8, '#2A9D8F'); break;
+      }
+      case 'kiosk': RR(-70, -110, 140, 110, 8, '#FFF1D6'); poly([-90, -110, 0, -160, 90, -110], '#E9C46A'); for (let i = -80; i < 80; i += 16) L(i, -110, i + 8, -96, 3, '#D4A84B');
+        RR(-50, -80, 100, 40, 6, '#7EC8F5'); RR(-60, -40, 120, 12, 4, '#C17F45'); C(-30, -50, 9, '#FFD60A'); C(0, -52, 9, '#2FA84F'); C(30, -50, 9, '#E63946'); break;
     }
   } else {
     switch (d.type) {
@@ -470,6 +554,12 @@ function drawDecor(d, layer) {
       case 'log': RR(-70, -36, 140, 36, 18, '#8B5A2B'); E(66, -18, 14, 18, '#C68642'); arcS(66, -18, 8, 0, TAU, 2, '#8B5A2B'); E(-20, -36, 16, 5, '#5DB85A'); break;
       case 'fern': for (let i = -3; i <= 3; i++) { ctx.save(); ctx.rotate(i * 0.32); E(0, -40, 9, 40, i % 2 ? '#3E8E41' : '#4CA64A'); ctx.restore(); } break;
       case 'stump': RR(-28, -40, 56, 40, 6, '#8B5A2B'); E(0, -40, 28, 9, '#C68642'); arcS(0, -40, 14, 0, TAU, 2, '#A0652E'); break;
+      case 'castle': RR(-40, -40, 80, 40, 4, '#E8C27A'); RR(-30, -66, 24, 26, 3, '#E8C27A'); RR(6, -66, 24, 26, 3, '#E8C27A'); RR(-10, -86, 20, 46, 3, '#EED08E');
+        for (const x of [-30, -18, 6, 18]) RR(x, -72, 8, 8, 2, '#E8C27A'); L(0, -86, 0, -108, 2, '#6B4429'); poly([0, -108, 0, -96, 16, -102], RED); RR(-8, -24, 16, 24, 8, '#C99A55'); break;
+      case 'shells': for (let i = 0; i < 4; i++) { const x = -40 + i * 26; ctx.fillStyle = ['#FFB3C6', '#FFF1D6', '#FFD6A5', '#E0C3FC'][i]; ctx.beginPath(); ctx.arc(x, -2, 9, Math.PI, 0); ctx.fill(); L(x, -2, x, -10, 1.5, 'rgba(0,0,0,.15)'); } break;
+      case 'ball': { const r = 22; for (let i = 0; i < 6; i++) { ctx.fillStyle = ['#E63946', '#FFFDF6', '#457B9D', '#FFFDF6', '#FFD60A', '#FFFDF6'][i]; ctx.beginPath(); ctx.moveTo(0, -r); ctx.arc(0, -r, r, i * TAU / 6, (i + 1) * TAU / 6); ctx.closePath(); ctx.fill(); } C(0, -r, 5, '#fff'); break; }
+      case 'bucket': L(26, 0, 44, -50, 5, '#FFD60A'); E(24, -4, 9, 6, '#FFD60A'); poly([-18, -36, 18, -36, 13, 0, -13, 0], '#FF6FA8'); arcS(0, -36, 16, Math.PI, 0, 2.5, '#E0558E'); break;
+      case 'starfish': star(0, -12, 18, '#FF8C42', 0.2); star(0, -12, 8, '#FFB070', 0.2); break;
       case 'butterfly': {
         for (let i = 0; i < 3; i++) flowerAt(-30 + i * 30, 30 + i * 6, FLOWER_COLORS[(d.c + i) % 7]);
         const bx = Math.sin(G.t * 1.3 + d.lx) * 40, by = -90 + Math.cos(G.t * 1.9 + d.lx) * 25, f = Math.abs(Math.sin(G.t * 14));
@@ -527,9 +617,9 @@ function drawGround() {
     ctx.fillStyle = pal(wx, 'grass'); ctx.fillRect(sx, GY - 30, step + 1, 18);
     ctx.fillStyle = pal(wx, 'path'); ctx.fillRect(sx, GY - 14, step + 1, 56);
     ctx.fillStyle = pal(wx, 'soil'); ctx.fillRect(sx, GY + 42, step + 1, VH - GY - 42);
-    // folhinhas de grama
+    // folhinhas de grama (não na praia)
     ctx.fillStyle = pal(wx, 'grass');
-    for (let i = 0; i < 3; i++) { const bx = sx + i * 8, h = 6 + hash(Math.floor(wx / 8) + i) * 10; ctx.beginPath(); ctx.moveTo(bx, GY - 29); ctx.lineTo(bx + 4, GY - 29 - h); ctx.lineTo(bx + 8, GY - 29); ctx.fill(); }
+    if (beachW(wx) < 0.5) for (let i = 0; i < 3; i++) { const bx = sx + i * 8, h = 6 + hash(Math.floor(wx / 8) + i) * 10; ctx.beginPath(); ctx.moveTo(bx, GY - 29); ctx.lineTo(bx + 4, GY - 29 - h); ctx.lineTo(bx + 8, GY - 29); ctx.fill(); }
   }
   ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(0, GY - 14, VW, 4); ctx.fillRect(0, GY + 42, VW, 5);
   // pedrinhas / juntas da calçada
@@ -542,6 +632,27 @@ function drawGround() {
   }
 }
 
+// mar ao fundo na praia
+function drawSea() {
+  const step = 24, top = GY - 150;
+  for (let sx = -((G.cam % step + step) % step); sx < VW + step; sx += step) {
+    const w = beachW(G.cam + sx); if (w <= 0) continue;
+    ctx.globalAlpha = w;
+    ctx.fillStyle = '#2E9BD6'; ctx.fillRect(sx, top, step + 1, 40);
+    ctx.fillStyle = '#4DB4E6'; ctx.fillRect(sx, top + 40, step + 1, 40);
+    ctx.fillStyle = '#7FD3F0'; ctx.fillRect(sx, top + 80, step + 1, 50);
+  }
+  ctx.globalAlpha = 1;
+  // ondinhas e espuma
+  for (let i = 0; i < 40; i++) {
+    const wx = Math.floor(G.cam / 90) * 90 + i * 90 - 180, sx = wx - G.cam + Math.sin(G.t + i) * 10;
+    const w = beachW(wx); if (w <= 0.05) continue;
+    ctx.globalAlpha = w * 0.8;
+    arcS(sx, top + 30 + (i % 3) * 30, 10, 1.15 * Math.PI, 1.85 * Math.PI, 2.5, '#fff');
+    C(sx + 30, GY - 30 + Math.sin(G.t * 2 + i) * 2, 9, '#fff');
+  }
+  ctx.globalAlpha = 1;
+}
 function drawSky() {
   const mid = G.cam + VW / 2;
   const g = ctx.createLinearGradient(0, 0, 0, GY);
@@ -591,6 +702,8 @@ function sfx(n) {
     case 'scared': tone(700, 0.45, 'square', 0.06, 0, 0.35); break;
     case 'boing': tone(260, 0.4, 'sine', 0.3, 0, 2.6); break;
     case 'whoosh': tone(500, 0.35, 'triangle', 0.12, 0, 2.2); break;
+    case 'box': tone(180, 0.12, 'square', 0.12, 0, 0.6); [79, 83, 86].forEach((m, i) => tone(mf(m), 0.12, 'triangle', 0.2, 0.06 + i * 0.06)); break;
+    case 'magic': [84, 88, 91, 96, 91, 96].forEach((m, i) => tone(mf(m), 0.18, 'sine', 0.16, i * 0.09)); break;
     case 'bark': tone(620, 0.09, 'square', 0.12, 0, 0.55); tone(480, 0.12, 'sawtooth', 0.08, 0.02, 0.6); break;
     case 'growl': tone(90, 0.9, 'sawtooth', 0.1, 0, 0.8); tone(70, 0.9, 'square', 0.05, 0.05, 0.9); break;
     case 'battle': [55, 58, 62, 67].forEach((m, i) => tone(mf(m), 0.16, 'square', 0.12, i * 0.07)); tone(mf(43), 0.6, 'sawtooth', 0.1, 0.3); break;
@@ -604,6 +717,7 @@ function startMusic() {
   const step = 60 / 132 / 2; let i = 0, bi = 0, next = AC.currentTime + 0.1;
   musicTimer = setInterval(() => {
     if (!AC) return;
+    if (next < AC.currentTime - 0.05) next = AC.currentTime + 0.05;   // timer atrasou: pula as notas perdidas
     while (next < AC.currentTime + 0.25) {
       const when = next - AC.currentTime;
       if (battleMusic) {
@@ -631,7 +745,7 @@ const VOVO = { x: HOUSE_X + 50, y: GY, bh: 190 };
 function genBerries() {
   const b = [], r = mulberry32(42);
   for (let g = 0; g < 20; g++) {
-    const x0 = 720 + g * 610, type = g % 4;
+    const x0 = 720 + g * 920, type = g % 4;
     for (let i = 0; i < 5; i++) {
       let y = GY - 30;
       if (type === 1) y -= Math.sin(i / 4 * Math.PI) * 140;
@@ -642,9 +756,17 @@ function genBerries() {
   }
   return b;
 }
+function genBoxes() {
+  const b = [];
+  for (let g = 0; g < 20; g++) {
+    const x0 = 720 + g * 920;
+    for (const o of (g < 10 ? [380, 560, 740] : [430, 690])) b.push({ x: x0 + o, y: GY - 160, broken: false, ph: g + o });
+  }
+  return b;
+}
 function newGame() {
   G = {
-    t: 0, cam: 0, count: 0, berries: genBerries(), drops: [], parts: [], bubbles: [], helpers: [],
+    t: 0, cam: 0, count: 0, brig: 0, berries: genBerries(), boxes: genBoxes(), pops: [], brigMilestone: 0, drops: [], parts: [], bubbles: [], helpers: [],
     wolf: null, wolfIdx: 0, scene: null, finished: false, menu: false, milestone: 0,
     P: { x: 480, y: GY, vx: 0, vy: 0, face: 1, ground: true, walk: 0, hurt: 0, knock: 0, mode: 'free', carried: false, moving: false, bh: 140 },
   };
@@ -661,7 +783,7 @@ addEventListener('keydown', (e) => {
   if (!running) { if (e.code === 'Enter' || e.code === 'Space') startGame(); return; }
   if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); return; }
   if (G.menu && !paused) {
-    const n = { Digit1: 0, Numpad1: 0, Digit2: 1, Numpad2: 1, Digit3: 2, Numpad3: 2, Digit4: 3, Numpad4: 3 }[e.code];
+    const n = { Digit1: 0, Numpad1: 0, Digit2: 1, Numpad2: 1, Digit3: 2, Numpad3: 2, Digit4: 3, Numpad4: 3, Digit5: 4, Numpad5: 4 }[e.code];
     if (n !== undefined) choose(POWERS[n]);
     else if (e.code === 'ArrowLeft' || e.code === 'KeyA') selectOpt(menuSel - 1);
     else if (e.code === 'ArrowRight' || e.code === 'KeyD') selectOpt(menuSel + 1);
@@ -699,7 +821,7 @@ $('jump').addEventListener('pointerdown', (e) => { e.preventDefault(); jumpQueue
 document.querySelectorAll('.b-opt').forEach((b) => b.addEventListener('click', () => choose(b.dataset.power)));
 
 // ---------- Menu de batalha (estilo RPG): o jogo congela e a criança escolhe ----------
-const POWERS = ['stick', 'horse', 'ana', 'dog'];
+const POWERS = ['stick', 'horse', 'ana', 'dog', 'scooter'];
 let menuSel = 0;
 function selectOpt(i) {
   menuSel = (i + POWERS.length) % POWERS.length;
@@ -729,20 +851,24 @@ function usePower(kind) {
   const P = G.P, W = G.wolf;
   if (W.state === 'grab') W.state = 'block';
   P.mode = 'scene'; P.knock = 0; P.vx = 0; P.face = 1;
-  const hk = kind === 'ana' ? 'ana' : kind === 'dog' ? 'layla' : 'dindo';
-  const h = { kind: hk, x: G.cam - 140, y: GY, face: 1, anim: 0, state: 'scene', bh: { ana: 205, layla: 125, dindo: 245 }[hk], barkT: 0 };
+  const hk = { ana: 'ana', dog: 'layla', scooter: 'scooter' }[kind] || 'dindo';
+  const h = { kind: hk, x: G.cam - 140, y: GY, face: 1, anim: 0, state: 'scene', bh: { ana: 205, layla: 125, dindo: 245, scooter: 100 }[hk], barkT: 0 };
+  if (hk === 'scooter') { h.x = P.x + 46; h.y = GY - 620; }      // vem do céu
   G.helpers.push(h);
   G.scene = { type: kind, phase: 'come', t: 0, h };
   G.bubbles = [];
-  sfx('power'); burst(P.x, P.y - 70, 'spark', 14);
-  if (kind === 'stick') { bubble(h, 'Sai pra lá, Lobo! Vou te dar um pau!', 3); }
-  if (kind === 'dog') { bubble(h, 'Au! Au! Au!', 2.5); }
-  if (kind === 'horse') { bubble(h, 'Sobe no cavalinho, Cecília!'); }
-  if (kind === 'ana') { bubble(h, 'Segura firme, maninha!'); }
+  sfx(hk === 'scooter' ? 'magic' : 'power'); burst(P.x, P.y - 70, 'spark', 14);
+  if (kind === 'stick') bubble(h, 'Sai pra lá, Lobo! Vou te dar um pau!', 3);
+  if (kind === 'dog') bubble(h, 'Au! Au! Au!', 2.5);
+  if (kind === 'horse') bubble(h, 'Vem, Cecília! Pros meus ombros!', 2.4);
+  if (kind === 'ana') bubble(h, 'Segura firme, maninha!');
+  if (kind === 'scooter') bubble(P, 'Oba! Um patinete mágico!', 2.4);
 }
+// posição (pés) da Cecília quando está sendo levada
 function carrySeat(h) {
-  // posição (pés) da Cecília quando está no colo/costas
-  return h.kind === 'ana' ? { x: h.x + 36, y: h.y - 46 } : { x: h.x - 32, y: h.y - 98 };
+  if (h.kind === 'ana') return { x: h.x + 36, y: h.y - 46 };          // no colo
+  if (h.kind === 'scooter') return { x: h.x - 6, y: h.y - 16 };       // em pé no patinete
+  return { x: h.x - 14, y: h.y - 200 };                               // nos ombros do Dindo
 }
 function updateScene(dt) {
   const S = G.scene, P = G.P, W = G.wolf; S.t += dt;
@@ -750,46 +876,59 @@ function updateScene(dt) {
   const h = S.h;
   if (S.type === 'stick' || S.type === 'dog') {
     const dog = S.type === 'dog';
-    h.x += (dog ? 820 : 720) * dt; h.anim += dt * (dog ? 20 : 15);
-    if (dog && (h.barkT -= dt) <= 0) { h.barkT = 0.32; sfx('bark'); }
+    h.x += (dog ? 820 : 720) * PS * dt; h.anim += dt * (dog ? 20 : 15) * PS;
+    if (dog && (h.barkT -= dt) <= 0) { h.barkT = 0.36; sfx('bark'); }
     if (W && W.state !== 'flee' && h.x > W.x - 200) {
       W.state = 'flee'; W.t = 0; W.face = 1; bubble(W, 'Socorro! Socorro!'); sfx('scared');
     }
-    if (!G.wolf) { h.state = 'exit'; endScene(); }
+    if (!G.wolf) { h.state = 'exit'; h.t = 0; endScene(); }
     return;
   }
-  // cavalinho (Dindo) ou Ana de patins
-  const isAna = h.kind === 'ana', spd = isAna ? 820 : 640;
+  // cavalinho nos ombros, Ana de patins ou patinete mágico
+  const kind = h.kind, spd = { ana: 820, scooter: 860, dindo: 640 }[kind] * PS;
   if (S.phase === 'come') {
-    const tx = isAna ? P.x - 36 : P.x + 32;
-    h.x = Math.min(tx, h.x + 760 * dt); h.anim += dt * 15;
-    if (h.x >= tx) { S.phase = 'pick'; S.t = 0; S.fx = P.x; S.fy = P.y; P.carried = true; sfx('jump'); }
+    if (kind === 'scooter') {
+      // desce do céu brilhando
+      const k = Math.min(1, S.t / (1.1 / PS)), e = 1 - Math.pow(1 - k, 3);
+      h.y = GY - (1 - e) * 620; h.x = P.x + 46;
+      if (Math.random() < 0.7) G.parts.push({ type: 'spark', x: h.x + (Math.random() - 0.5) * 70, y: h.y - Math.random() * 90, vx: (Math.random() - 0.5) * 60, vy: -30, life: 0.6, max: 0.6, s: 7, c: Math.random() < 0.5 ? '#FFD60A' : '#fff' });
+      if (k >= 1) { S.phase = 'pick'; S.t = 0; S.fx = P.x; S.fy = P.y; P.carried = true; sfx('jump'); burst(h.x, GY - 20, 'spark', 10); }
+    } else {
+      const tx = kind === 'ana' ? P.x - 36 : P.x + 6;
+      h.x = Math.min(tx, h.x + 760 * PS * dt); h.anim += dt * 15 * PS;
+      if (h.x >= tx) { S.phase = 'pick'; S.t = 0; S.fx = P.x; S.fy = P.y; P.carried = true; sfx('jump'); }
+    }
   } else if (S.phase === 'pick') {
-    const k = Math.min(1, S.t / 0.45), s = carrySeat(h);
-    P.x = S.fx + (s.x - S.fx) * k; P.y = S.fy + (s.y - S.fy) * k - Math.sin(k * Math.PI) * 60;
+    // Dindo levanta a Cecília e coloca nos ombros (arco mais alto)
+    const dur = (kind === 'dindo' ? 0.7 : 0.45) / PS;
+    const k = Math.min(1, S.t / dur), s = carrySeat(h);
+    P.x = S.fx + (s.x - S.fx) * k; P.y = S.fy + (s.y - S.fy) * k - Math.sin(k * Math.PI) * (kind === 'dindo' ? 90 : 60);
     if (k >= 1) {
       S.phase = 'ride'; S.t = 0; sfx('whoosh');
-      if (!isAna) { bubble(P, 'Vamos, cavalo! Anda, cavalo!', 2.6); }
+      if (kind === 'dindo') bubble(P, 'Vamos, cavalo! Anda, cavalo!', 2.6);
+      if (kind === 'scooter') bubble(P, 'Uhuuul!', 1.6);
     }
   } else if (S.phase === 'ride') {
-    h.x += spd * dt; h.anim += dt * (isAna ? 9 : 15);
+    h.x += spd * dt; h.anim += dt * (kind === 'ana' ? 9 : 15) * PS;
     // pulo por cima do lobo
     const dx = W ? h.x - W.x : 999;
     h.y = Math.abs(dx) < 190 ? GY - Math.cos(dx / 190 * Math.PI / 2) * 165 : GY;
-    if (W && W.state !== 'dizzy' && W.state !== 'leave' && dx > -150) {
-      W.state = 'dizzy'; W.t = 0; sfx('boing'); bubble(W, 'Ué?! Cadê a cestinha?');
+    if (W && wolfThreat(W) && dx > -150) {
+      if (kind === 'scooter') { W.state = 'spin'; W.t = 0; W.rot = 0; sfx('boing'); bubble(W, 'Uaaaa! Tô muito zonzo!', 2.6); }
+      else { W.state = 'dizzy'; W.t = 0; sfx('boing'); bubble(W, 'Ué?! Cadê a cestinha?'); }
     }
     const s = carrySeat(h); P.x = s.x; P.y = s.y;
-    if (isAna && Math.random() < 0.5) G.parts.push({ type: 'spark', x: h.x - 20, y: GY - 6, vx: -60, vy: -40 - Math.random() * 60, life: 0.5, max: 0.5, s: 6, c: '#FFD60A' });
+    if (kind !== 'dindo' && Math.random() < 0.5) G.parts.push({ type: 'spark', x: h.x - 20, y: h.y - 6, vx: -60, vy: -40 - Math.random() * 60, life: 0.5, max: 0.5, s: 6, c: '#FFD60A' });
     if (!W || dx > 430) { S.phase = 'drop'; S.t = 0; S.fx = P.x; S.fy = P.y; h.y = GY; }
   } else if (S.phase === 'drop') {
     h.anim += dt * 4;
-    const k = Math.min(1, S.t / 0.4), tx = isAna ? h.x + 70 : h.x + 50;
-    P.x = S.fx + (tx - S.fx) * k; P.y = S.fy + (GY - S.fy) * k - Math.sin(k * Math.PI) * 50;
+    const k = Math.min(1, S.t / (0.45 / PS)), tx = kind === 'ana' ? h.x + 70 : h.x + 50;
+    P.x = S.fx + (tx - S.fx) * k; P.y = S.fy + (GY - S.fy) * k - Math.sin(k * Math.PI) * 60;
     if (k >= 1) {
       P.carried = false; P.y = GY; h.state = 'exit'; h.t = 0;
-      const bye = isAna ? 'Passamos por ele, maninha!' : 'Tchau, Cecília!';
-      bubble(h, bye, 2.6);
+      const bye = { ana: 'Passamos por ele, maninha!', dindo: 'Tchau, Cecília!', scooter: 'Tchau, patinete!' }[kind];
+      bubble(kind === 'scooter' ? P : h, bye, 2.6);
+      if (kind === 'scooter') sfx('magic');
       endScene();
     }
   }
@@ -843,8 +982,9 @@ function updateWolf(dt) {
       break;
     }
     case 'grab': if (W.t > 0.8) { W.state = 'block'; W.t = 0; } break;
-    case 'flee': W.face = 1; W.x += 980 * dt; W.walk += dt * 18; W.moving = true; if (W.x > G.cam + VW + 260) G.wolf = null; break;
+    case 'flee': W.face = 1; W.x += 980 * PS * dt; W.walk += dt * 18 * PS; W.moving = true; if (W.x > G.cam + VW + 260) G.wolf = null; break;
     case 'dizzy': if (W.t > 1.6) { W.state = 'leave'; W.t = 0; W.face = -1; } break;
+    case 'spin': W.rot += dt * 15; W.x -= 300 * PS * dt; W.face = -1; if (W.x < G.cam - 300 || W.t > 6) G.wolf = null; break;
     case 'leave': W.x -= 340 * dt; W.walk += dt * 11; W.moving = true; if (W.x < G.cam - 260) G.wolf = null; break;
   }
 }
@@ -875,12 +1015,27 @@ function updatePlayer(dt) {
   }
   jumpQueued = false;
   if (P.hurt > 0) P.hurt -= dt;
+  // quebrar caixinhas de brigadeiro (pulando nelas)
+  for (const b of G.boxes) {
+    if (b.broken) continue;
+    const hit = P.carried ? Math.abs(b.x - P.x) < 60 : Math.abs(b.x - P.x) < 50 && P.y - 128 < b.y && P.y > b.y - 50;
+    if (hit) { breakBox(b); if (!P.carried && P.vy < 0) P.vy = 80; }
+  }
   // colher morangos
   for (const b of G.berries) {
     if (b.got) continue;
     const hit = P.carried ? Math.abs(b.x - P.x) < 60 : Math.abs(b.x - P.x) < 42 && b.y > P.y - 128 && b.y < P.y + 14;
     if (hit) collect(b);
   }
+}
+function breakBox(b) {
+  b.broken = true; G.brig++; updateHud(); sfx('box');
+  for (let i = 0; i < 10; i++) { const a = Math.random() * TAU; G.parts.push({ type: 'chunk', x: b.x, y: b.y - 25, vx: Math.cos(a) * 220, vy: Math.sin(a) * 220 - 160, life: 0.8, max: 0.8, s: 7 + Math.random() * 6, rot: Math.random() * 6, c: i % 3 ? '#D9A066' : '#FF6FA8' }); }
+  G.pops.push({ x: b.x, y: b.y - 30, vy: -420, t: 0 });
+  G.parts.push({ type: 'text', x: b.x, y: b.y - 70, vx: 0, vy: -70, life: 0.9, max: 0.9, txt: '+1', c: '#4A2617' });
+  const sc = $('score2'); sc.classList.remove('pop'); void sc.offsetWidth; sc.classList.add('pop');
+  const m = [25, 50].find(v => G.brig >= v && G.brigMilestone < v);
+  if (m) { G.brigMilestone = m; bubble(G.P, m === TOTAL_BRIG ? 'Todos os brigadeiros! Hummm!' : 'Hummm, 25 brigadeiros!', 2); }
 }
 function collect(b) {
   b.got = true; G.count++; sfx('collect');
@@ -917,8 +1072,17 @@ function updateFx(dt) {
     if (d.y >= GY - 30 && d.vy > 0) { d.done = true; G.berries.push({ x: Math.max(80, d.x), y: GY - 30, got: false, ph: Math.random() * TAU }); }
   }
   G.drops = G.drops.filter(d => !d.done);
-  for (const h of G.helpers) if (h.state === 'exit') { h.t += dt; h.x += (h.t < 0.6 ? 0 : 700) * dt; h.anim += dt * 15; }
-  G.helpers = G.helpers.filter(h => !(h.state === 'exit' && h.x > G.cam + VW + 300));
+  for (const p of G.pops) { p.t += dt; p.vy += 1100 * dt; p.y += p.vy * dt; }
+  G.pops = G.pops.filter(p => p.t < 0.9);
+  for (const h of G.helpers) {
+    if (h.state !== 'exit') continue;
+    h.t += dt; h.anim += dt * 15 * PS;
+    if (h.kind === 'scooter') {
+      h.y -= (h.t < 0.3 ? 0 : 600) * dt;
+      if (Math.random() < 0.6) G.parts.push({ type: 'spark', x: h.x + (Math.random() - 0.5) * 60, y: h.y - Math.random() * 80, vx: 0, vy: 40, life: 0.6, max: 0.6, s: 7, c: '#FFD60A' });
+    } else h.x += (h.t < 0.6 ? 0 : 700 * PS) * dt;
+  }
+  G.helpers = G.helpers.filter(h => !(h.state === 'exit' && (h.x > G.cam + VW + 300 || h.y < TOP - 200)));
 }
 
 // ---------- Loop ----------
@@ -935,11 +1099,12 @@ function update(dt) {
   G.cam = clamp(G.cam, 0, Math.max(0, LEVEL_END - VW));
   $('pcec').style.left = (clamp(P.x / (HOUSE_X - 40), 0, 1) * 100) + '%';
 }
-function updateHud(force) { $('count').textContent = G.count; }
+function updateHud() { $('count').textContent = G.count; $('count2').textContent = G.brig; }
 
 function render() {
   ctx.setTransform(scale, 0, 0, scale, 0, -TOP * scale);
   drawSky();
+  drawSea();
   for (const layer of ['far', 'mid']) {
     const p = P_LAYER[layer];
     for (const d of DECOR[layer]) {
@@ -958,24 +1123,31 @@ function render() {
   }
   for (const s of SIGNS) if (Math.abs(s - G.cam - VW / 2) < VW) drawSign(s);
   if (HOUSE_X - G.cam < VW + 600) { drawHouse(); drawVovo(VOVO.x, VOVO.y, -1, { wave: G.P.x > HOUSE_X - 700, happy: G.finished && G.scene && G.scene.t > 1.5 }); }
+  drawBoxes();
   // morangos
   for (const b of G.berries) if (!b.got && b.x > G.cam - 40 && b.x < G.cam + VW + 40) drawBerry(b.x, b.y + Math.sin(G.t * 3 + b.ph) * 4);
   for (const d of G.drops) { ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.rot); drawBerry(0, 0, 0.9); ctx.restore(); }
   // personagens
   if (G.wolf) drawWolf(G.wolf);
   const P = G.P;
-  const cecOpts = { walk: P.walk, moving: P.moving, air: !P.ground && !P.carried, count: G.count, hurt: P.hurt, pose: P.carried ? 'sit' : 'stand', fast: P.carried && G.scene && G.scene.phase === 'ride', happy: G.finished && G.scene && G.scene.t > 1.5, scared: wolfThreat(G.wolf) && G.wolf.x - P.x < 260 && !G.scene };
+  const carrier = P.carried && G.scene && G.scene.h ? G.scene.h.kind : null;
+  const cecOpts = { walk: P.walk, moving: P.moving, air: !P.ground && !P.carried, count: G.count, hurt: P.hurt, pose: carrier === 'dindo' ? 'perch' : carrier === 'ana' ? 'sit' : 'stand', fast: P.carried && G.scene && G.scene.phase === 'ride', happy: G.finished && G.scene && G.scene.t > 1.5, scared: wolfThreat(G.wolf) && G.wolf.x - P.x < 260 && !G.scene };
   if (!P.carried) { shadow(P.x, 24, 0.18 * clamp(1 - (GY - P.y) / 300, 0.3, 1)); drawCecilia(P.x, P.y, P.face, cecOpts); }
   for (const h of G.helpers) {
     const S = G.scene && G.scene.h === h ? G.scene : null;
     const carrying = P.carried && S;
     const run = h.state === 'exit' ? h.t > 0.6 : !(S && (S.phase === 'pick' || S.phase === 'drop'));
     shadow(h.x, h.kind === 'ana' ? 32 : 36, 0.18 * clamp(1 - (GY - h.y) / 300, 0.3, 1));
-    if (h.kind === 'layla') {
+    if (h.kind === 'scooter') {
+      drawScooter(h.x, h.y, h.state === 'exit' || (S && S.phase === 'come'));
+      if (carrying) drawCecilia(P.x, P.y, 1, cecOpts);
+    } else if (h.kind === 'layla') {
       drawLayla(h.x, h.y, 1, { anim: h.anim, run: true, bark: h.state === 'scene' });
     } else if (h.kind === 'dindo') {
-      drawDindo(h.x, h.y, 1, { anim: h.anim, run, stick: S && S.type === 'stick', carry: carrying, yell: S && S.type === 'stick', wave: h.state === 'exit' && h.t < 0.6 });
+      const o = { anim: h.anim, run, stick: S && S.type === 'stick', carry: carrying && S.phase !== 'pick', yell: S && S.type === 'stick', wave: h.state === 'exit' && h.t < 0.6 };
+      drawDindo(h.x, h.y, 1, o, 'body');
       if (carrying) drawCecilia(P.x, P.y, 1, cecOpts);
+      drawDindo(h.x, h.y, 1, o, 'arm');
     } else {
       const o = { anim: h.anim, skate: run, carry: carrying, wave: h.state === 'exit' && h.t < 0.6 };
       drawAna(h.x, h.y, 1, o, 'body');
@@ -990,7 +1162,8 @@ function render() {
     else if (p.type === 'dust') C(p.x, p.y, p.s * (1.5 - a), 'rgba(160,140,120,.6)');
     else if (p.type === 'heart') heart(p.x, p.y, 10, p.c);
     else if (p.type === 'confetti') { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); }
-    else if (p.type === 'text') { ctx.font = '800 28px "Trebuchet MS", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#fff'; ctx.strokeText(p.txt, p.x, p.y); ctx.fillStyle = RED; ctx.fillText(p.txt, p.x, p.y); }
+    else if (p.type === 'text') { ctx.font = '800 28px "Trebuchet MS", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#fff'; ctx.strokeText(p.txt, p.x, p.y); ctx.fillStyle = p.c || RED; ctx.fillText(p.txt, p.x, p.y); }
+    else if (p.type === 'chunk') { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot + G.t * 8); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s); ctx.restore(); }
     ctx.globalAlpha = 1;
   }
   for (const b of G.bubbles) drawBubble(b);
@@ -1011,12 +1184,14 @@ function drawBubble(b) {
   ctx.globalAlpha = 1;
 }
 
-let last = 0;
+let last = 0, frozenDrawn = false;
 function frame(ts) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.033, Math.max(0, (ts - last) / 1000)); last = ts;
-  if (running && !paused) update(dt);
-  else if (!running) { G.t += dt; G.P.walk += 0; }
+  // congelado (menu de batalha ou pausa): desenha uma vez e espera
+  if (running && (paused || G.menu)) { if (!frozenDrawn) { render(); frozenDrawn = true; } return; }
+  frozenDrawn = false;
+  if (running) update(dt); else G.t += dt;
   render();
 }
 
@@ -1027,6 +1202,7 @@ function resize() {
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
   TOP = h < 520 ? 130 : 0;
   scale = cv.height / (VH - TOP); VW = cv.width / scale;
+  frozenDrawn = false;
 }
 addEventListener('resize', resize);
 const isTouch = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -1061,7 +1237,7 @@ function togglePause(force) {
 function showEnd() {
   running = false;
   $('controls').classList.add('hidden');
-  $('endCount').textContent = G.count;
+  $('endCount').textContent = G.count; $('endBrig').textContent = G.brig;
   $('endMsg').textContent = G.count >= TOTAL ? 'Incrível! Você pegou TODOS os morangos! ⭐⭐⭐'
     : G.count >= 60 ? 'Muito bem! A vovó vai fazer um bolo de morango! ⭐⭐'
     : 'A vovó amou! Vamos tentar pegar mais morangos? ⭐';

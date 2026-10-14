@@ -15,17 +15,17 @@ Depois acesse o endereço exibido (ex.: http://localhost:3000).
 2. Abra no Chrome (Android) → menu ⋮ → **Instalar app** / no iPhone (Safari) → Compartilhar → **Adicionar à Tela de Início**.
 3. O jogo abre em tela cheia, na horizontal, e funciona offline.
 
+## Como jogar
+- Colha os **100 morangos** e pule nas caixinhas para pegar os **50 brigadeiros**.
+- Quando o Lobo Mau aparece, o jogo congela (estilo RPG) e você escolhe quem ajuda: Dindo com o pau, Cavalinho (nos ombros do Dindo), Ana de patins, Layla (a cachorrinha) ou Patinete mágico.
+
 ## Controles
 | Ação | Teclado | Celular |
 |---|---|---|
 | Andar | ← → ou A D | joystick (esquerda) |
-| Pular | Espaço, ↑ ou W | botão verde ⬆ (ou joystick para cima) |
-| Dindo com o pau | 1 ou Z | botão do pau |
-| Cavalinho do Dindo | 2 ou X | botão do cavalo |
-| Ana de patins | 3 ou C | botão da bolinha |
+| Pular / quebrar caixinha | Espaço, ↑ ou W | botão verde ⬆ (ou joystick para cima) |
+| Escolher ajudante | 1 a 5, ou setas + Enter | tocar no cartão |
 | Pausar | Esc ou P | ⏸ |
-
-Os poderes só acendem quando o Lobo Mau aparece.
 
 ## Arquivos
 - `game.js`: jogo inteiro (cenário, personagens, lobo, poderes, sons e falas)
