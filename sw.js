@@ -1,5 +1,5 @@
-// Service worker: guarda o jogo para funcionar sem internet
-const CACHE = 'cecilia-v2';
+﻿// Service worker: guarda o jogo para funcionar sem internet
+const CACHE = 'cecilia-v3';
 const FILES = ['./', 'index.html', 'style.css', 'game.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
@@ -12,7 +12,7 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
-  // rede primeiro (pega atualizações), cache se estiver offline
+  // rede primeiro (pega atualizaÃ§Ãµes), cache se estiver offline
   e.respondWith(
     fetch(e.request).then((r) => {
       const copy = r.clone();

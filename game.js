@@ -623,20 +623,8 @@ function startMusic() {
 function setSound(on) {
   soundOn = on; $('btnSound').textContent = on ? '🔊' : '🔈';
   if (master) master.gain.value = on ? 0.7 : 0;
-  if (!on && 'speechSynthesis' in window) speechSynthesis.cancel();
   try { localStorage.setItem('cecilia-sound', on ? '1' : '0'); } catch (e) { }
 }
-// Voz (fala em português quando o aparelho suporta)
-let voice = null;
-function pickVoice() { try { const vs = speechSynthesis.getVoices(); voice = vs.find(v => /pt[-_]BR/i.test(v.lang)) || vs.find(v => /^pt/i.test(v.lang)) || null; } catch (e) { } }
-if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function say(text, pitch = 1.3, rate = 1) {
-  if (!soundOn || !('speechSynthesis' in window)) return;
-  try { const u = new SpeechSynthesisUtterance(text); u.lang = 'pt-BR'; if (voice) u.voice = voice; u.rate = rate; u.pitch = pitch; speechSynthesis.speak(u); } catch (e) { }
-}
-const PITCH = { cecilia: 1.9, dindo: 0.75, ana: 1.75, wolf: 0.05, vovo: 1.15 };
-const sayWolf = (t) => say(t, PITCH.wolf, 0.78);   // voz bem grave e lenta
-
 // ---------- Estado do jogo ----------
 let G = null;
 const VOVO = { x: HOUSE_X + 50, y: GY, bh: 190 };
@@ -724,13 +712,12 @@ function openMenu() {
   const el = $('battle'); el.classList.remove('hidden');
   const f = el.querySelector('.b-flash'); f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
   $('controls').classList.add('hidden');
-  say('Quem vai ajudar a Cecília?', PITCH.cecilia);
+ 
 }
 function choose(kind) {
   if (!G || !G.menu || paused) return;
   G.menu = false; battleMusic = false;
   $('battle').classList.add('hidden'); $('controls').classList.remove('hidden');
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
   usePower(kind);
 }
 
@@ -748,10 +735,10 @@ function usePower(kind) {
   G.scene = { type: kind, phase: 'come', t: 0, h };
   G.bubbles = [];
   sfx('power'); burst(P.x, P.y - 70, 'spark', 14);
-  if (kind === 'stick') { bubble(h, 'Sai pra lá, Lobo! Vou te dar um pau!', 3); say('Sai pra lá, Lobo! Vou te dar um pau!', PITCH.dindo); }
+  if (kind === 'stick') { bubble(h, 'Sai pra lá, Lobo! Vou te dar um pau!', 3); }
   if (kind === 'dog') { bubble(h, 'Au! Au! Au!', 2.5); }
-  if (kind === 'horse') { bubble(h, 'Sobe no cavalinho, Cecília!'); say('Sobe no cavalinho, Cecília!', PITCH.dindo); }
-  if (kind === 'ana') { bubble(h, 'Segura firme, maninha!'); say('Segura firme, maninha!', PITCH.ana); }
+  if (kind === 'horse') { bubble(h, 'Sobe no cavalinho, Cecília!'); }
+  if (kind === 'ana') { bubble(h, 'Segura firme, maninha!'); }
 }
 function carrySeat(h) {
   // posição (pés) da Cecília quando está no colo/costas
@@ -766,7 +753,7 @@ function updateScene(dt) {
     h.x += (dog ? 820 : 720) * dt; h.anim += dt * (dog ? 20 : 15);
     if (dog && (h.barkT -= dt) <= 0) { h.barkT = 0.32; sfx('bark'); }
     if (W && W.state !== 'flee' && h.x > W.x - 200) {
-      W.state = 'flee'; W.t = 0; W.face = 1; bubble(W, 'Socorro! Socorro!'); sfx('scared'); sayWolf('Socorro!');
+      W.state = 'flee'; W.t = 0; W.face = 1; bubble(W, 'Socorro! Socorro!'); sfx('scared');
     }
     if (!G.wolf) { h.state = 'exit'; endScene(); }
     return;
@@ -782,7 +769,7 @@ function updateScene(dt) {
     P.x = S.fx + (s.x - S.fx) * k; P.y = S.fy + (s.y - S.fy) * k - Math.sin(k * Math.PI) * 60;
     if (k >= 1) {
       S.phase = 'ride'; S.t = 0; sfx('whoosh');
-      if (!isAna) { bubble(P, 'Vamos, cavalo! Anda, cavalo!', 2.6); say('Vamos, cavalo! Anda, cavalo!', PITCH.cecilia); }
+      if (!isAna) { bubble(P, 'Vamos, cavalo! Anda, cavalo!', 2.6); }
     }
   } else if (S.phase === 'ride') {
     h.x += spd * dt; h.anim += dt * (isAna ? 9 : 15);
@@ -802,7 +789,7 @@ function updateScene(dt) {
     if (k >= 1) {
       P.carried = false; P.y = GY; h.state = 'exit'; h.t = 0;
       const bye = isAna ? 'Passamos por ele, maninha!' : 'Tchau, Cecília!';
-      bubble(h, bye, 2.6); say(bye, isAna ? PITCH.ana : PITCH.dindo);
+      bubble(h, bye, 2.6);
       endScene();
     }
   }
@@ -817,7 +804,7 @@ function updateEnd(dt) {
   const S = G.scene, P = G.P, tx = HOUSE_X - 40;
   if (P.y < GY) { P.vy += GRAV * dt; P.y = Math.min(GY, P.y + P.vy * dt); }
   if (P.x < tx) { P.x = Math.min(tx, P.x + 210 * dt); P.walk += dt * 9; P.moving = true; P.face = 1; } else P.moving = false;
-  if (!S.greet && S.t > 0.4) { S.greet = true; bubble(VOVO, 'Cecília! Minha netinha querida!', 3.5); say('Cecília! Minha netinha querida!', PITCH.vovo); }
+  if (!S.greet && S.t > 0.4) { S.greet = true; bubble(VOVO, 'Cecília! Minha netinha querida!', 3.5); }
   if (!S.party && S.t > 2.0) {
     S.party = true; sfx('win');
     burst(P.x + 40, P.y - 100, 'heart', 16);
@@ -832,7 +819,7 @@ function spawnWolf() {
   G.wolf = { x: G.cam + VW + 140, y: GY, tx: Math.min(P.x + 430, G.cam + VW - 170), face: -1, state: 'enter', t: 0, walk: 0, moving: true, bh: 245 };
   G.wolfIdx++;
   sfx('wolf');
-  bubble(P, 'Ih! O Lobo Mau!', 2.2); say('Ih! O Lobo Mau!', PITCH.cecilia);
+  bubble(P, 'Ih! O Lobo Mau!', 2.2);
 }
 function updateWolf(dt) {
   const W = G.wolf, P = G.P;
@@ -846,7 +833,7 @@ function updateWolf(dt) {
       W.x -= 380 * dt; W.walk += dt * 11; W.moving = true;
       if (W.x <= W.tx) {
         W.state = 'block'; W.t = 0;
-        bubble(W, 'Me dá os morangos!', 2.6); sfx('growl'); sayWolf('Me dá os morangos!');
+        bubble(W, 'Me dá os morangos!', 2.6); sfx('growl');
       }
       break;
     case 'block': {
@@ -901,7 +888,7 @@ function collect(b) {
   G.parts.push({ type: 'text', x: b.x, y: b.y - 20, vx: 0, vy: -70, life: 0.8, max: 0.8, txt: '+1' });
   updateHud(); const sc = $('score'); sc.classList.remove('pop'); void sc.offsetWidth; sc.classList.add('pop');
   const m = [25, 50, 75, 100].find(v => G.count >= v && G.milestone < v);
-  if (m) { G.milestone = m; const txt = m === 100 ? 'Todos os cem morangos! Uhul!' : `Oba! ${m} morangos!`; bubble(G.P, m === 100 ? 'Todos os 100! Uhul!' : `Oba! ${m} morangos!`, 2); say(txt, PITCH.cecilia); }
+  if (m) { G.milestone = m; bubble(G.P, m === 100 ? 'Todos os 100! Uhul!' : `Oba! ${m} morangos!`, 2); }
 }
 
 // ---------- Efeitos ----------
@@ -1063,7 +1050,7 @@ function startGame() {
   $('start').classList.add('hidden'); $('end').classList.add('hidden'); $('pause').classList.add('hidden');
   $('hud').classList.remove('hidden'); $('controls').classList.remove('hidden');
   bubble(G.P, 'Vamos pra casa da Vovó!', 2.6);
-  say('Vamos colher morangos para a Vovó Querida!', PITCH.cecilia);
+ 
 }
 function togglePause(force) {
   if (!running) return;
@@ -1079,11 +1066,11 @@ function showEnd() {
     : G.count >= 60 ? 'Muito bem! A vovó vai fazer um bolo de morango! ⭐⭐'
     : 'A vovó amou! Vamos tentar pegar mais morangos? ⭐';
   $('end').classList.remove('hidden');
-  say(`Parabéns! Você colheu ${G.count} morangos!`, PITCH.vovo);
+ 
 }
 $('btnPlay').addEventListener('click', startGame);
 $('btnAgain').addEventListener('click', startGame);
-$('btnRestart').addEventListener('click', () => { if ('speechSynthesis' in window) speechSynthesis.cancel(); startGame(); });
+$('btnRestart').addEventListener('click', startGame);
 $('btnResume').addEventListener('click', () => togglePause(false));
 $('btnPause').addEventListener('click', () => togglePause());
 $('btnSound').addEventListener('click', () => { initAudio(); setSound(!soundOn); });
