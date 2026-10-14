@@ -1204,22 +1204,33 @@ function resize() {
   scale = cv.height / (VH - TOP); VW = cv.width / scale;
   frozenDrawn = false;
 }
-addEventListener('resize', resize);
+addEventListener('resize', () => { resize(); checkOrientation(); });
 const isTouch = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 function applyInputMode() {
   document.body.classList.toggle('no-touch', !isTouch());
 }
 addEventListener('touchstart', () => { if (document.body.classList.contains('no-touch')) applyInputMode(); }, { passive: true });
 
+// tela cheia + trava na horizontal (onde o navegador permitir)
+function goFullscreen() {
+  const el = document.documentElement;
+  const lock = () => { try { const p = screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'); if (p && p.catch) p.catch(() => { }); } catch (e) { } };
+  if (document.fullscreenElement || document.webkitFullscreenElement) return lock();
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return lock();
+  try { const p = req.call(el, { navigationUI: 'hide' }); if (p && p.then) p.then(lock, lock); else setTimeout(lock, 300); } catch (e) { lock(); }
+}
+// aviso "gire o celular": aparece ao ficar em pé e some sozinho em 3 segundos
+let wasPortrait = false, rotateTimer = 0;
+function checkOrientation() {
+  const el = $('rotate'), portrait = isTouch() && innerHeight > innerWidth;
+  if (portrait && !wasPortrait) { el.classList.add('show'); clearTimeout(rotateTimer); rotateTimer = setTimeout(() => el.classList.remove('show'), 3000); }
+  if (!portrait) { el.classList.remove('show'); clearTimeout(rotateTimer); }
+  wasPortrait = portrait;
+}
 function startGame() {
   initAudio();
-  if (isTouch()) {
-    const el = document.documentElement;
-    try {
-      const p = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : null;
-      if (p && p.then) p.then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => { })).catch(() => { });
-    } catch (e) { }
-  }
+  goFullscreen();
   newGame();
   running = true; paused = false; battleMusic = false;
   $('battle').classList.add('hidden');
@@ -1254,7 +1265,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && run
 
 // Início
 try { if (localStorage.getItem('cecilia-sound') === '0') setSound(false); } catch (e) { }
-genDecor(); resize(); applyInputMode(); newGame();
+genDecor(); resize(); applyInputMode(); newGame(); checkOrientation();
 G.P.x = 480; G.cam = 0;
 requestAnimationFrame(frame);
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
