@@ -1,0 +1,145 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden; background: #7ec8f5;
+  font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+  user-select: none; -webkit-user-select: none; touch-action: none;
+  overscroll-behavior: none;
+}
+canvas { position: fixed; inset: 0; display: block; }
+button { font-family: inherit; cursor: pointer; border: none; }
+.hidden { display: none !important; }
+
+/* ---------- HUD ---------- */
+#hud {
+  position: fixed; top: 0; left: 0; right: 0;
+  padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+  display: flex; align-items: center; gap: 14px; pointer-events: none;
+}
+#score {
+  display: flex; align-items: center; gap: 6px;
+  background: #fffdf6; border: 4px solid #e63946; border-radius: 999px;
+  padding: 2px 16px 2px 6px; font-size: 30px; font-weight: 800; color: #b3202c;
+  box-shadow: 0 4px 0 rgba(0,0,0,.15);
+}
+#score small { font-size: 18px; color: #c46; }
+#score .berry { width: 40px; height: 40px; }
+#score.pop { animation: pop .25s; }
+@keyframes pop { 50% { transform: scale(1.18); } }
+#progress { flex: 1; display: flex; align-items: center; gap: 6px; max-width: 420px; margin: 0 auto; }
+#track { flex: 1; height: 14px; background: rgba(255,255,255,.7); border-radius: 999px; position: relative; border: 3px solid #fff; }
+#pcec {
+  position: absolute; top: 50%; left: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px;
+  border-radius: 50%; background: #e63946; border: 3px solid #fff; box-shadow: 0 2px 0 rgba(0,0,0,.2);
+}
+#progress .house { font-size: 28px; }
+.hud-btns { display: flex; gap: 8px; pointer-events: auto; }
+.hud-btns button {
+  width: 48px; height: 48px; border-radius: 50%; font-size: 22px;
+  background: rgba(255,255,255,.85); box-shadow: 0 4px 0 rgba(0,0,0,.18);
+}
+
+/* ---------- Controles ---------- */
+#controls {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 0;
+}
+#joy {
+  position: fixed; left: max(24px, env(safe-area-inset-left)); bottom: 22px;
+  width: 150px; height: 150px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.35), rgba(255,255,255,.18));
+  border: 4px solid rgba(255,255,255,.75); touch-action: none;
+}
+#knob {
+  position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px;
+  border-radius: 50%; background: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.2), inset 0 -6px 0 #ffd6db;
+  pointer-events: none;
+}
+#actions {
+  position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: 18px;
+  width: 300px; height: 230px;
+}
+#jump {
+  position: absolute; right: 0; bottom: 4px; width: 110px; height: 110px; border-radius: 50%;
+  background: #2fa84f; box-shadow: 0 6px 0 #1d7a36; touch-action: none;
+}
+#jump svg { width: 56px; height: 56px; }
+#jump:active, #jump.on { transform: translateY(4px); box-shadow: 0 2px 0 #1d7a36; }
+.power {
+  position: absolute; width: 84px; height: 84px; border-radius: 50%;
+  background: #fffdf6; border: 4px solid #e63946; box-shadow: 0 5px 0 rgba(0,0,0,.2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0;
+  opacity: .45; transition: opacity .2s, transform .1s; touch-action: none;
+}
+.power svg { width: 44px; height: 44px; }
+.power span {
+  position: absolute; bottom: -14px; font-size: 14px; font-weight: 800; color: #fff;
+  background: #e63946; padding: 0 8px; border-radius: 999px; white-space: nowrap;
+}
+#pw1 { right: 120px; bottom: 0; }
+#pw2 { right: 110px; bottom: 112px; }
+#pw3 { right: 10px; bottom: 140px; }
+.power.ready { opacity: 1; animation: pulse 0.9s infinite; }
+.power:active { transform: scale(.92); }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 5px 0 rgba(0,0,0,.2), 0 0 0 0 rgba(255,214,10,.9); }
+  50% { box-shadow: 0 5px 0 rgba(0,0,0,.2), 0 0 0 14px rgba(255,214,10,0); transform: scale(1.08); }
+}
+/* No computador sem toque: esconde joystick e pulo, mantém poderes clicáveis */
+body.no-touch #joy, body.no-touch #jump { display: none; }
+body.no-touch #actions { width: 120px; height: 330px; }
+body.no-touch #pw1 { right: 10px; bottom: 0; }
+body.no-touch #pw2 { right: 10px; bottom: 110px; }
+body.no-touch #pw3 { right: 10px; bottom: 220px; }
+body.no-touch .power span::before { content: attr(data-key) " "; }
+
+/* ---------- Telas ---------- */
+.overlay {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(30, 20, 60, .35); padding: 16px;
+}
+.panel {
+  background: #fffdf6; border-radius: 32px; padding: 22px 34px 26px; text-align: center;
+  border: 6px solid #e63946; box-shadow: 0 10px 0 rgba(0,0,0,.18);
+  max-width: 640px; max-height: 100%; overflow: auto;
+}
+h1 { margin: 0 0 10px; line-height: 1; }
+h1 .t1 { display: block; font-size: 64px; color: #e63946; text-shadow: 0 4px 0 #ffd6db; }
+h1 .t2 { display: block; font-size: 26px; color: #6a3d9a; margin-top: 6px; }
+h2 { margin: 0 0 12px; color: #e63946; font-size: 36px; line-height: 1.1; }
+.big {
+  font-size: 34px; font-weight: 800; color: #fff; background: #2fa84f;
+  padding: 10px 40px; border-radius: 999px; box-shadow: 0 6px 0 #1d7a36; margin: 6px;
+}
+.big:active { transform: translateY(4px); box-shadow: 0 2px 0 #1d7a36; }
+.mid {
+  font-size: 22px; font-weight: 800; color: #fff; background: #f4a261;
+  padding: 8px 26px; border-radius: 999px; box-shadow: 0 5px 0 #c97a3a; margin: 6px;
+}
+.howto { color: #5a4a6a; font-size: 17px; margin-top: 10px; }
+.howto p { margin: 6px 0; }
+.result { font-size: 26px; color: #6a3d9a; margin: 4px 0; }
+#endMsg { font-size: 20px; color: #2a7a4a; margin: 6px 0 12px; }
+
+/* ---------- Gire o celular ---------- */
+#rotate {
+  display: none; position: fixed; inset: 0; z-index: 99; background: #e63946; color: #fff;
+  flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  font-size: 28px; font-weight: 800;
+}
+#rotate .phone { font-size: 80px; animation: turn 1.6s infinite ease-in-out; }
+@keyframes turn { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) and (pointer: coarse) { #rotate { display: flex; } }
+
+/* Telas baixas (celular deitado) */
+@media (max-height: 430px) {
+  h1 .t1 { font-size: 46px; } h1 .t2 { font-size: 20px; }
+  .howto { font-size: 14px; } .big { font-size: 26px; padding: 6px 30px; }
+  .panel { padding: 14px 24px 18px; }
+  #joy { width: 130px; height: 130px; bottom: 14px; }
+  #knob { width: 60px; height: 60px; margin: -30px 0 0 -30px; }
+  #jump { width: 96px; height: 96px; }
+  .power { width: 72px; height: 72px; } .power svg { width: 38px; height: 38px; }
+  #actions { bottom: 12px; }
+  #pw1 { right: 104px; } #pw2 { right: 96px; bottom: 96px; } #pw3 { bottom: 120px; }
+  #score { font-size: 24px; } #score .berry { width: 32px; height: 32px; }
+  .hud-btns button { width: 42px; height: 42px; font-size: 19px; }
+}
