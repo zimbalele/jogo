@@ -1,5 +1,5 @@
 // Service worker: guarda o jogo para funcionar sem internet
-const CACHE = 'cecilia-v1';
+const CACHE = 'cecilia-v2';
 const FILES = ['./', 'index.html', 'style.css', 'game.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 

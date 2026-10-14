@@ -34,21 +34,39 @@
 <div id="controls" class="hidden">
   <div id="joy"><div id="knob"></div></div>
   <div id="actions">
-    <button class="power" id="pw1" data-power="stick" aria-label="Dindo com o pau">
-      <svg viewBox="0 0 64 64"><g transform="rotate(-35 32 32)"><rect x="28" y="4" width="8" height="56" rx="4" fill="#8b5a2b"/><rect x="30" y="8" width="2" height="48" fill="#a8743f"/><circle cx="32" cy="22" r="3" fill="#6d4420"/></g></svg>
-      <span>Dindo</span>
-    </button>
-    <button class="power" id="pw2" data-power="horse" aria-label="Cavalinho">
-      <svg viewBox="0 0 64 64"><path d="M14 54V36c0-8 6-14 14-14h6l6-10 4 6 6 2 2 8-6 2-4-2-2 6v20h-6V40H22v14z" fill="#b5651d"/><path d="M40 12l4 6-6 2z" fill="#6b3a12"/><path d="M34 22c-2-6 0-10 6-10" stroke="#6b3a12" stroke-width="4" fill="none"/><circle cx="46" cy="20" r="1.8" fill="#222"/></svg>
-      <span>Cavalinho</span>
-    </button>
-    <button class="power" id="pw3" data-power="ana" aria-label="Ana de patins">
-      <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#fff" stroke="#222" stroke-width="4"/><path d="M6 32a26 26 0 0 1 52 0z" fill="#e63946" stroke="#222" stroke-width="4"/><rect x="6" y="30" width="52" height="4" fill="#222"/><circle cx="32" cy="32" r="8" fill="#fff" stroke="#222" stroke-width="4"/></svg>
-      <span>Ana</span>
-    </button>
     <button id="jump" aria-label="Pular">
       <svg viewBox="0 0 64 64"><path d="M32 10L54 36H40v18H24V36H10z" fill="#fff"/></svg>
     </button>
+  </div>
+</div>
+
+<!-- Menu de batalha (estilo RPG) -->
+<div id="battle" class="hidden">
+  <div class="b-flash"></div>
+  <div class="b-box">
+    <div class="b-title">🐺 O Lobo Mau apareceu! Quem vai ajudar a Cecília?</div>
+    <div class="b-opts">
+      <button class="b-opt" data-power="stick">
+        <span class="k">1</span>
+        <svg viewBox="0 0 64 64"><g transform="rotate(-35 32 32)"><rect x="28" y="4" width="8" height="56" rx="4" fill="#8b5a2b"/><rect x="30" y="8" width="2" height="48" fill="#a8743f"/><circle cx="32" cy="22" r="3" fill="#6d4420"/></g></svg>
+        <b>Dindo</b><small>com o pau</small>
+      </button>
+      <button class="b-opt" data-power="horse">
+        <span class="k">2</span>
+        <svg viewBox="0 0 64 64"><path d="M14 54V36c0-8 6-14 14-14h6l6-10 4 6 6 2 2 8-6 2-4-2-2 6v20h-6V40H22v14z" fill="#b5651d"/><path d="M40 12l4 6-6 2z" fill="#6b3a12"/><path d="M34 22c-2-6 0-10 6-10" stroke="#6b3a12" stroke-width="4" fill="none"/><circle cx="46" cy="20" r="1.8" fill="#222"/></svg>
+        <b>Cavalinho</b><small>do Dindo</small>
+      </button>
+      <button class="b-opt" data-power="ana">
+        <span class="k">3</span>
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#fff" stroke="#222" stroke-width="4"/><path d="M6 32a26 26 0 0 1 52 0z" fill="#e63946" stroke="#222" stroke-width="4"/><rect x="6" y="30" width="52" height="4" fill="#222"/><circle cx="32" cy="32" r="8" fill="#fff" stroke="#222" stroke-width="4"/></svg>
+        <b>Ana</b><small>de patins</small>
+      </button>
+      <button class="b-opt" data-power="dog">
+        <span class="k">4</span>
+        <svg viewBox="0 0 64 64"><ellipse cx="14" cy="30" rx="8" ry="16" fill="#2e2e38" transform="rotate(20 14 30)"/><ellipse cx="50" cy="30" rx="8" ry="16" fill="#2e2e38" transform="rotate(-20 50 30)"/><circle cx="32" cy="30" r="20" fill="#1e1e24"/><ellipse cx="32" cy="44" rx="13" ry="10" fill="#1e1e24"/><path d="M22 46q10 6 20 0M24 50q8 4 16 0" stroke="#d9a441" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="25" cy="26" r="2.5" fill="#d9a441"/><circle cx="39" cy="26" r="2.5" fill="#d9a441"/><circle cx="25" cy="31" r="3.5" fill="#fff"/><circle cx="39" cy="31" r="3.5" fill="#fff"/><circle cx="25.5" cy="31.5" r="2.2" fill="#3a2a1a"/><circle cx="39.5" cy="31.5" r="2.2" fill="#3a2a1a"/><ellipse cx="32" cy="39" rx="5" ry="3.5" fill="#000"/><rect x="18" y="52" width="28" height="5" rx="2.5" fill="#e63946"/></svg>
+        <b>Layla</b><small>a cachorrinha</small>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -60,8 +78,8 @@
     <div class="howto">
       <p>🍓 Colha os <b>100 morangos</b> até a casa da Vovó Marisa!</p>
       <p>⬅ ➡ andar &nbsp;·&nbsp; ⬆ / Espaço pular</p>
-      <p>Quando o <b>Lobo Mau</b> aparecer, aperte um poder:<br>
-        <b>1</b> Dindo com o pau &nbsp;·&nbsp; <b>2</b> Cavalinho do Dindo &nbsp;·&nbsp; <b>3</b> Ana de patins</p>
+      <p>Quando o <b>Lobo Mau</b> aparecer, o jogo para e você escolhe quem ajuda:<br>
+        <b>Dindo</b> · <b>Cavalinho</b> · <b>Ana</b> · <b>Layla</b></p>
     </div>
   </div>
 </div>

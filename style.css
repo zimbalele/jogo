@@ -63,37 +63,48 @@ button { font-family: inherit; cursor: pointer; border: none; }
 }
 #jump svg { width: 56px; height: 56px; }
 #jump:active, #jump.on { transform: translateY(4px); box-shadow: 0 2px 0 #1d7a36; }
-.power {
-  position: absolute; width: 84px; height: 84px; border-radius: 50%;
-  background: #fffdf6; border: 4px solid #e63946; box-shadow: 0 5px 0 rgba(0,0,0,.2);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0;
-  opacity: .45; transition: opacity .2s, transform .1s; touch-action: none;
+/* No computador sem toque: esconde joystick e pulo */
+body.no-touch #controls { display: none; }
+
+/* ---------- Menu de batalha (estilo RPG) ---------- */
+#battle { position: fixed; inset: 0; z-index: 20; display: flex; align-items: flex-end; justify-content: center; padding: 12px; }
+#battle::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(20,10,40,.05), rgba(20,10,40,.55)); }
+.b-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; animation: flash .55s ease-out; }
+@keyframes flash { 0% { opacity: .95; } 25% { opacity: 0; } 40% { opacity: .7; } 100% { opacity: 0; } }
+.b-box {
+  position: relative; width: min(980px, 100%);
+  background: linear-gradient(#26366e, #18224a); color: #fff;
+  border: 5px solid #fff; border-radius: 18px; outline: 4px solid #18224a;
+  box-shadow: 0 10px 0 rgba(0,0,0,.25); padding: 12px 14px 14px;
+  animation: slideUp .35s cubic-bezier(.2,1.4,.4,1) both; animation-delay: .25s;
 }
-.power svg { width: 44px; height: 44px; }
-.power span {
-  position: absolute; bottom: -14px; font-size: 14px; font-weight: 800; color: #fff;
-  background: #e63946; padding: 0 8px; border-radius: 999px; white-space: nowrap;
+@keyframes slideUp { from { transform: translateY(120%); } to { transform: translateY(0); } }
+.b-title { font-size: 22px; font-weight: 800; text-align: center; margin: 0 0 10px; text-shadow: 0 2px 0 #0a1030; }
+.b-opts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.b-opt {
+  position: relative; background: #fffdf6; border-radius: 16px; border: 5px solid #fffdf6;
+  padding: 8px 4px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  color: #b3202c; box-shadow: 0 5px 0 #0a1030; transition: transform .12s;
 }
-#pw1 { right: 120px; bottom: 0; }
-#pw2 { right: 110px; bottom: 112px; }
-#pw3 { right: 10px; bottom: 140px; }
-.power.ready { opacity: 1; animation: pulse 0.9s infinite; }
-.power:active { transform: scale(.92); }
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 5px 0 rgba(0,0,0,.2), 0 0 0 0 rgba(255,214,10,.9); }
-  50% { box-shadow: 0 5px 0 rgba(0,0,0,.2), 0 0 0 14px rgba(255,214,10,0); transform: scale(1.08); }
+.b-opt svg { width: 74px; height: 74px; }
+.b-opt b { font-size: 22px; line-height: 1; }
+.b-opt small { font-size: 14px; color: #6a3d9a; font-weight: 700; }
+.b-opt .k {
+  position: absolute; top: 6px; left: 8px; width: 24px; height: 24px; border-radius: 50%;
+  background: #18224a; color: #fff; font-size: 14px; font-weight: 800; line-height: 24px;
 }
-/* No computador sem toque: esconde joystick e pulo, mantém poderes clicáveis */
-body.no-touch #joy, body.no-touch #jump { display: none; }
-body.no-touch #actions { width: 120px; height: 330px; }
-body.no-touch #pw1 { right: 10px; bottom: 0; }
-body.no-touch #pw2 { right: 10px; bottom: 110px; }
-body.no-touch #pw3 { right: 10px; bottom: 220px; }
-body.no-touch .power span::before { content: attr(data-key) " "; }
+.b-opt.sel { border-color: #FFD60A; transform: translateY(-6px) scale(1.04); }
+.b-opt.sel::after {
+  content: "▼"; position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+  color: #FFD60A; font-size: 20px; text-shadow: 0 2px 0 #0a1030; animation: bob .5s infinite alternate;
+}
+@keyframes bob { to { margin-top: -6px; } }
+.b-opt:active { transform: scale(.95); }
+body:not(.no-touch) .b-opt .k { display: none; }
 
 /* ---------- Telas ---------- */
 .overlay {
-  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
   background: rgba(30, 20, 60, .35); padding: 16px;
 }
 .panel {
@@ -137,9 +148,8 @@ h2 { margin: 0 0 12px; color: #e63946; font-size: 36px; line-height: 1.1; }
   #joy { width: 130px; height: 130px; bottom: 14px; }
   #knob { width: 60px; height: 60px; margin: -30px 0 0 -30px; }
   #jump { width: 96px; height: 96px; }
-  .power { width: 72px; height: 72px; } .power svg { width: 38px; height: 38px; }
-  #actions { bottom: 12px; }
-  #pw1 { right: 104px; } #pw2 { right: 96px; bottom: 96px; } #pw3 { bottom: 120px; }
+  .b-opt svg { width: 52px; height: 52px; } .b-opt b { font-size: 18px; } .b-title { font-size: 18px; margin-bottom: 8px; }
+  .b-box { padding: 8px 10px 10px; }
   #score { font-size: 24px; } #score .berry { width: 32px; height: 32px; }
   .hud-btns button { width: 42px; height: 42px; font-size: 19px; }
 }

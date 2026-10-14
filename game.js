@@ -161,7 +161,7 @@ function basket(x, y, count) {
 
 // Dindo: adulto de ~1,70 m, ~73 kg
 function drawDindo(x, y, face, o) {
-  const SK = '#D9A27A', SK_D = '#BD845C', HAIR = '#2B1B12', SHIRT = '#2A9D8F', SHIRT_D = '#21867A', JEANS = '#2E4A7A', JEANS_D = '#243B62';
+  const SK = '#F2C9A8', SK_D = '#DDAA88', HAIR = '#E8C35A', HAIR_HI = '#F7DD8E', SHIRT = '#FFFFFF', SHIRT_D = '#E4E6EE', JEANS = '#3B5FA0', JEANS_D = '#2E4A7A';
   ctx.save(); ctx.translate(x, y); ctx.scale(face, 1);
   const t = o.anim || 0, run = o.run, sw = run ? Math.sin(t) * 0.85 : 0;
   ctx.translate(0, run ? -Math.abs(Math.cos(t)) * 6 : 0);
@@ -181,16 +181,18 @@ function drawDindo(x, y, face, o) {
   // braço de trás
   if (o.carry) arm(-0.9, -1.7, SHIRT_D, SK_D); else arm(-sw * 0.9, -sw * 0.9 + (run ? 1.1 : 0.15), SHIRT_D, SK_D);
   // tronco
-  RR(-21, -176, 42, 86, 15, SHIRT);
+  RR(-21, -176, 42, 86, 15, SHIRT); ctx.strokeStyle = '#C9CDD8'; ctx.lineWidth = 2; ctx.stroke();   // camiseta branca
+  L(-6, -170, 6, -166, 3, '#C9CDD8');
   RR(-21, -102, 42, 12, 5, JEANS); RR(-4, -100, 8, 6, 2, '#C9A227');
-  // cabeça
+  // cabeça (loiro, olhos azuis, sem barba)
   RR(-3, -186, 14, 14, 4, SK);
   C(6, -200, 23, SK);
   ctx.fillStyle = HAIR; ctx.beginPath(); ctx.arc(5, -203, 24, Math.PI * 0.95, Math.PI * 2.02); ctx.fill();
   C(-12, -204, 13, HAIR); C(-6, -198, 6, SK_D);
-  E(13, -186, 15, 8, 'rgba(43,27,18,.22)');                    // barbinha
-  eye(13, -202, 4.6, '#4a2c17', false); eye(24, -202, 4.6, '#4a2c17', false);
-  L(9, -211, 16, -212, 2.5, HAIR); L(21, -212, 28, -210, 2.5, HAIR);
+  for (const [hx2, hy2] of [[0, -224], [12, -225], [22, -220]]) C(hx2, hy2, 6, HAIR);
+  arcS(4, -212, 12, 3.6, 4.9, 3, HAIR_HI);
+  eye(13, -202, 4.6, '#3D8BD9', false); eye(24, -202, 4.6, '#3D8BD9', false);
+  L(9, -211, 16, -212, 2.5, '#C9A040'); L(21, -212, 28, -210, 2.5, '#C9A040');
   E(29, -194, 4, 5, SK_D);
   if (o.yell) { E(21, -184, 6, 5.5, '#7a2a20'); E(21, -182, 4, 2, '#e57373'); }
   else arcS(20, -189, 7, 0.15 * Math.PI, 0.85 * Math.PI, 2.6, '#7a2a20');
@@ -210,7 +212,7 @@ function drawDindo(x, y, face, o) {
 
 // Ana: irmã mais velha, de patins
 function drawAna(x, y, face, o, part) {
-  const SK = '#DDAA85', SK_D = '#C48E66', HAIR = '#4A2A18', SHIRT = '#8E5BD6', SHIRT_D = '#7346B8', LEGS = '#2B2D42', HELM = '#FF6FA8';
+  const SK = '#DDAA85', SK_D = '#C48E66', HAIR = '#141418', HAIR_HI = '#3A3A48', SHIRT = '#8E5BD6', SHIRT_D = '#7346B8', LEGS = '#2B2D42', HELM = '#FF6FA8';
   ctx.save(); ctx.translate(x, y); ctx.scale(face, 1);
   const t = o.anim || 0, sk = o.skate ? Math.sin(t) * 0.4 : 0;
   const lean = o.skate ? 0.16 : 0;
@@ -222,10 +224,13 @@ function drawAna(x, y, face, o, part) {
     const leg = (a, col) => { const k = limb(0, -82, 38, a, 13, col); const f = limb(k[0], k[1], 34, a * 0.6, 12, col); skate(f[0], f[1] - 6); };
     leg(-sk - 0.1, '#1E2030'); leg(sk + 0.1, LEGS);
     ctx.translate(0, -82); ctx.rotate(lean); ctx.translate(0, 82);
-    // rabo de cavalo ao vento
-    const wv = Math.sin(G.t * 10) * 4;
-    ctx.fillStyle = HAIR; ctx.beginPath(); ctx.moveTo(-14, -168);
-    ctx.quadraticCurveTo(-40, -160 + wv, -52 - (o.skate ? 10 : 0), -134 + wv); ctx.quadraticCurveTo(-30, -146, -10, -150); ctx.closePath(); ctx.fill();
+    // rabo de cavalo bem ondulado, preto, ao vento
+    for (let i = 0; i < 8; i++) {
+      const k = i / 7, px = -14 - k * (40 + (o.skate ? 12 : 0)), py = -170 + k * 40 + Math.sin(G.t * 10 - i * 0.9) * 3;
+      const wob = Math.sin(i * 1.7) * 5;
+      C(px, py + wob, 11 - k * 5, HAIR);
+      arcS(px - 1, py + wob - 2, 6 - k * 3, 3.4, 5.2, 2, HAIR_HI);
+    }
     // braço de trás
     const b = limb(0, -136, 30, o.carry ? 0.9 : -0.6 - sk, 10, SK_D); limb(b[0], b[1], 26, o.carry ? 1.7 : -0.2, 9, SK_D);
     // tronco + saia
@@ -235,11 +240,11 @@ function drawAna(x, y, face, o, part) {
     // cabeça
     RR(-3, -152, 12, 12, 4, SK);
     C(5, -166, 20, SK);
-    C(-8, -166, 10, HAIR);
+    for (const [wx2, wy2, r2] of [[-10, -168, 10], [-12, -156, 8], [-6, -150, 7]]) C(wx2, wy2, r2, HAIR);
     ctx.fillStyle = HELM; ctx.beginPath(); ctx.arc(4, -170, 23, Math.PI * 1.02, Math.PI * 2.02); ctx.fill();
     RR(-19, -172, 46, 6, 3, '#E0558E'); L(2, -168, 5, -150, 2, '#E0558E');
     E(-2, -183, 7, 3, 'rgba(255,255,255,.6)');
-    E(14, -160, 9, 3, HAIR);                                 // franja
+    C(10, -167, 4.5, HAIR); C(17, -168, 4, HAIR); C(24, -166, 3.5, HAIR);   // franja ondulada
     eye(11, -162, 4.6, '#5A3418', false); eye(21, -162, 4.6, '#5A3418', false);
     C(8, -153, 3.5, 'rgba(255,110,130,.4)'); C(25, -154, 3, 'rgba(255,110,130,.4)');
     arcS(18, -152, 5, 0.1 * Math.PI, 0.9 * Math.PI, 2.2, '#8a3a2a');
@@ -252,6 +257,36 @@ function drawAna(x, y, face, o, part) {
     const e = limb(4, -136, 30, a1, 11, SK); limb(4, -136, 13, a1, 14, SHIRT_D);
     const h = limb(e[0], e[1], 27, a2, 10, SK); C(h[0], h[1], 6, SK);
   }
+  ctx.restore();
+}
+
+// Layla: cachorra preta com tracinhos dourados na boca
+function drawLayla(x, y, face, o) {
+  const BK = '#1E1E24', BK2 = '#33333E', GOLD = '#D9A441';
+  ctx.save(); ctx.translate(x, y); ctx.scale(face, 1);
+  const t = o.anim || 0, run = o.run, sw = run ? Math.sin(t) * 0.75 : 0;
+  ctx.translate(0, run ? -Math.abs(Math.cos(t)) * 6 : 0);
+  // rabo abanando
+  ctx.save(); ctx.translate(-34, -60); ctx.rotate(-0.9 + Math.sin(G.t * 18) * 0.4); RR(-4, -30, 8, 32, 4, BK); ctx.restore();
+  // patas de trás (longe)
+  const paw = (e, c) => E(e[0] + 4, e[1], 7, 4, c);
+  paw(limb(-24, -44, 40, -sw, 10, BK2), BK2); paw(limb(22, -44, 40, sw, 10, BK2), BK2);
+  // corpo
+  E(0, -54, 38, 19, BK); E(4, -46, 26, 9, BK2);
+  // patas da frente (perto)
+  paw(limb(-20, -44, 40, sw, 11, BK), BK); paw(limb(26, -44, 40, -sw, 11, BK), BK);
+  // coleira
+  RR(26, -76, 11, 18, 4, RED); C(33, -58, 3.5, '#FFD60A');
+  // cabeça
+  C(42, -80, 18, BK);
+  E(31, -82, 7, 15, BK2, 0.5);                       // orelha caída
+  E(58, -73, 15, 9.5, BK);                           // focinho
+  C(44, -91, 2.6, GOLD);                             // sobrancelha dourada
+  // tracinhos dourados na boca
+  L(48, -68, 61, -66, 2.4, GOLD); L(50, -64, 59, -63, 2.2, GOLD); L(62, -70, 66, -68, 2, GOLD);
+  C(71, -76, 5, '#000'); C(70, -78, 1.6, '#666');   // nariz
+  C(47, -83, 5, '#F5E6C8'); C(48, -83, 3.6, '#3A2A1A'); C(49, -84.5, 1.4, '#fff');
+  if (o.bark && Math.sin(G.t * 22) > 0) { E(60, -63, 9, 5, '#7A2A2A'); E(60, -61, 5, 2.5, '#FF8FA3'); }
   ctx.restore();
 }
 
@@ -527,7 +562,7 @@ function drawSky() {
 }
 
 // ---------- Áudio ----------
-let AC = null, master = null, musicGain = null, soundOn = true, musicTimer = null;
+let AC = null, master = null, musicGain = null, soundOn = true, musicTimer = null, battleMusic = false;
 function initAudio() {
   if (AC) { AC.resume(); return; }
   try {
@@ -556,20 +591,32 @@ function sfx(n) {
     case 'scared': tone(700, 0.45, 'square', 0.06, 0, 0.35); break;
     case 'boing': tone(260, 0.4, 'sine', 0.3, 0, 2.6); break;
     case 'whoosh': tone(500, 0.35, 'triangle', 0.12, 0, 2.2); break;
+    case 'bark': tone(620, 0.09, 'square', 0.12, 0, 0.55); tone(480, 0.12, 'sawtooth', 0.08, 0.02, 0.6); break;
+    case 'growl': tone(90, 0.9, 'sawtooth', 0.1, 0, 0.8); tone(70, 0.9, 'square', 0.05, 0.05, 0.9); break;
+    case 'battle': [55, 58, 62, 67].forEach((m, i) => tone(mf(m), 0.16, 'square', 0.12, i * 0.07)); tone(mf(43), 0.6, 'sawtooth', 0.1, 0.3); break;
     case 'win': [72, 76, 79, 84, 79, 84, 88].forEach((m, i) => tone(mf(m), 0.22, 'triangle', 0.25, i * 0.13)); break;
   }
 }
 function startMusic() {
   const mel = [76, 79, 81, 79, 76, 72, 74, 76, 79, 76, 74, 72, 74, 0, 0, 0, 76, 79, 81, 84, 83, 81, 79, 76, 77, 76, 74, 76, 72, 0, 0, 0];
   const bass = [48, 45, 41, 43];
-  const step = 60 / 132 / 2; let i = 0, next = AC.currentTime + 0.1;
+  const bMel = [69, 72, 76, 72, 69, 72, 76, 79, 77, 74, 77, 81, 76, 72, 71, 68];
+  const step = 60 / 132 / 2; let i = 0, bi = 0, next = AC.currentTime + 0.1;
   musicTimer = setInterval(() => {
     if (!AC) return;
     while (next < AC.currentTime + 0.25) {
-      const when = next - AC.currentTime, m = mel[i % mel.length];
-      if (m) tone(mf(m), step * 1.6, 'triangle', 0.18, when, 0, musicGain);
-      if (i % 4 === 0) tone(mf(bass[Math.floor(i / 8) % 4]), step * 3, 'sine', 0.3, when, 0, musicGain);
-      i++; next += step;
+      const when = next - AC.currentTime;
+      if (battleMusic) {
+        // levada de batalha estilo RPG
+        tone(mf(bMel[bi % 16]), step * 0.9, 'square', 0.09, when, 0, musicGain);
+        if (bi % 2 === 0) tone(mf(bi % 8 < 4 ? 45 : 41), step * 1.8, 'triangle', 0.32, when, 0, musicGain);
+        bi++; next += step * 0.8;
+      } else {
+        const m = mel[i % mel.length];
+        if (m) tone(mf(m), step * 1.6, 'triangle', 0.18, when, 0, musicGain);
+        if (i % 4 === 0) tone(mf(bass[Math.floor(i / 8) % 4]), step * 3, 'sine', 0.3, when, 0, musicGain);
+        i++; next += step;
+      }
     }
   }, 90);
 }
@@ -583,11 +630,12 @@ function setSound(on) {
 let voice = null;
 function pickVoice() { try { const vs = speechSynthesis.getVoices(); voice = vs.find(v => /pt[-_]BR/i.test(v.lang)) || vs.find(v => /^pt/i.test(v.lang)) || null; } catch (e) { } }
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function say(text, pitch = 1.3) {
+function say(text, pitch = 1.3, rate = 1) {
   if (!soundOn || !('speechSynthesis' in window)) return;
-  try { const u = new SpeechSynthesisUtterance(text); u.lang = 'pt-BR'; if (voice) u.voice = voice; u.rate = 1.0; u.pitch = pitch; speechSynthesis.speak(u); } catch (e) { }
+  try { const u = new SpeechSynthesisUtterance(text); u.lang = 'pt-BR'; if (voice) u.voice = voice; u.rate = rate; u.pitch = pitch; speechSynthesis.speak(u); } catch (e) { }
 }
-const PITCH = { cecilia: 1.7, dindo: 0.8, ana: 1.45, wolf: 0.5, vovo: 1.15 };
+const PITCH = { cecilia: 1.9, dindo: 0.75, ana: 1.75, wolf: 0.05, vovo: 1.15 };
+const sayWolf = (t) => say(t, PITCH.wolf, 0.78);   // voz bem grave e lenta
 
 // ---------- Estado do jogo ----------
 let G = null;
@@ -609,7 +657,7 @@ function genBerries() {
 function newGame() {
   G = {
     t: 0, cam: 0, count: 0, berries: genBerries(), drops: [], parts: [], bubbles: [], helpers: [],
-    wolf: null, wolfIdx: 0, scene: null, finished: false, grabbedOnce: false, milestone: 0,
+    wolf: null, wolfIdx: 0, scene: null, finished: false, menu: false, milestone: 0,
     P: { x: 480, y: GY, vx: 0, vy: 0, face: 1, ground: true, walk: 0, hurt: 0, knock: 0, mode: 'free', carried: false, moving: false, bh: 140 },
   };
   updateHud(true);
@@ -623,11 +671,16 @@ addEventListener('keydown', (e) => {
   if (e.repeat) return;
   keys[e.code] = true;
   if (!running) { if (e.code === 'Enter' || e.code === 'Space') startGame(); return; }
+  if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); return; }
+  if (G.menu && !paused) {
+    const n = { Digit1: 0, Numpad1: 0, Digit2: 1, Numpad2: 1, Digit3: 2, Numpad3: 2, Digit4: 3, Numpad4: 3 }[e.code];
+    if (n !== undefined) choose(POWERS[n]);
+    else if (e.code === 'ArrowLeft' || e.code === 'KeyA') selectOpt(menuSel - 1);
+    else if (e.code === 'ArrowRight' || e.code === 'KeyD') selectOpt(menuSel + 1);
+    else if (e.code === 'Enter' || e.code === 'Space') choose(POWERS[menuSel]);
+    return;
+  }
   if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) jumpQueued = true;
-  if (e.code === 'Digit1' || e.code === 'Numpad1' || e.code === 'KeyZ') usePower('stick');
-  if (e.code === 'Digit2' || e.code === 'Numpad2' || e.code === 'KeyX') usePower('horse');
-  if (e.code === 'Digit3' || e.code === 'Numpad3' || e.code === 'KeyC') usePower('ana');
-  if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; joyX = 0; });
@@ -655,22 +708,48 @@ function axis() {
   joy.addEventListener('pointerup', end); joy.addEventListener('pointercancel', end);
 })();
 $('jump').addEventListener('pointerdown', (e) => { e.preventDefault(); jumpQueued = true; });
-document.querySelectorAll('.power').forEach((b) => b.addEventListener('pointerdown', (e) => { e.preventDefault(); usePower(b.dataset.power); }));
+document.querySelectorAll('.b-opt').forEach((b) => b.addEventListener('click', () => choose(b.dataset.power)));
+
+// ---------- Menu de batalha (estilo RPG): o jogo congela e a criança escolhe ----------
+const POWERS = ['stick', 'horse', 'ana', 'dog'];
+let menuSel = 0;
+function selectOpt(i) {
+  menuSel = (i + POWERS.length) % POWERS.length;
+  document.querySelectorAll('.b-opt').forEach((b, k) => b.classList.toggle('sel', k === menuSel));
+}
+function openMenu() {
+  G.menu = true; battleMusic = true; joyX = 0;
+  for (const k in keys) keys[k] = false;
+  sfx('battle'); selectOpt(0);
+  const el = $('battle'); el.classList.remove('hidden');
+  const f = el.querySelector('.b-flash'); f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
+  $('controls').classList.add('hidden');
+  say('Quem vai ajudar a Cecília?', PITCH.cecilia);
+}
+function choose(kind) {
+  if (!G || !G.menu || paused) return;
+  G.menu = false; battleMusic = false;
+  $('battle').classList.add('hidden'); $('controls').classList.remove('hidden');
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  usePower(kind);
+}
 
 // ---------- Poderes e cenas ----------
 function wolfThreat(W) { return W && (W.state === 'enter' || W.state === 'block' || W.state === 'grab'); }
-function powerReady() { return running && !paused && G && !G.scene && !G.finished && wolfThreat(G.wolf); }
+function powerReady() { return running && !paused && G && !G.menu && !G.scene && !G.finished && wolfThreat(G.wolf); }
 function usePower(kind) {
   if (!powerReady()) return;
   const P = G.P, W = G.wolf;
   if (W.state === 'grab') W.state = 'block';
   P.mode = 'scene'; P.knock = 0; P.vx = 0; P.face = 1;
-  const h = { kind: kind === 'ana' ? 'ana' : 'dindo', x: G.cam - 140, y: GY, face: 1, anim: 0, state: 'scene', bh: kind === 'ana' ? 205 : 245 };
+  const hk = kind === 'ana' ? 'ana' : kind === 'dog' ? 'layla' : 'dindo';
+  const h = { kind: hk, x: G.cam - 140, y: GY, face: 1, anim: 0, state: 'scene', bh: { ana: 205, layla: 125, dindo: 245 }[hk], barkT: 0 };
   G.helpers.push(h);
   G.scene = { type: kind, phase: 'come', t: 0, h };
   G.bubbles = [];
   sfx('power'); burst(P.x, P.y - 70, 'spark', 14);
-  if (kind === 'stick') { bubble(h, 'Sai daqui, Lobo Mau!'); say('Sai daqui, Lobo Mau!', PITCH.dindo); }
+  if (kind === 'stick') { bubble(h, 'Sai pra lá, Lobo! Vou te dar um pau!', 3); say('Sai pra lá, Lobo! Vou te dar um pau!', PITCH.dindo); }
+  if (kind === 'dog') { bubble(h, 'Au! Au! Au!', 2.5); }
   if (kind === 'horse') { bubble(h, 'Sobe no cavalinho, Cecília!'); say('Sobe no cavalinho, Cecília!', PITCH.dindo); }
   if (kind === 'ana') { bubble(h, 'Segura firme, maninha!'); say('Segura firme, maninha!', PITCH.ana); }
 }
@@ -682,10 +761,12 @@ function updateScene(dt) {
   const S = G.scene, P = G.P, W = G.wolf; S.t += dt;
   if (S.type === 'end') return updateEnd(dt);
   const h = S.h;
-  if (S.type === 'stick') {
-    h.x += 720 * dt; h.anim += dt * 15;
+  if (S.type === 'stick' || S.type === 'dog') {
+    const dog = S.type === 'dog';
+    h.x += (dog ? 820 : 720) * dt; h.anim += dt * (dog ? 20 : 15);
+    if (dog && (h.barkT -= dt) <= 0) { h.barkT = 0.32; sfx('bark'); }
     if (W && W.state !== 'flee' && h.x > W.x - 200) {
-      W.state = 'flee'; W.t = 0; W.face = 1; bubble(W, 'Socorro! Socorro!'); sfx('scared'); say('Socorro!', PITCH.wolf);
+      W.state = 'flee'; W.t = 0; W.face = 1; bubble(W, 'Socorro! Socorro!'); sfx('scared'); sayWolf('Socorro!');
     }
     if (!G.wolf) { h.state = 'exit'; endScene(); }
     return;
@@ -699,7 +780,10 @@ function updateScene(dt) {
   } else if (S.phase === 'pick') {
     const k = Math.min(1, S.t / 0.45), s = carrySeat(h);
     P.x = S.fx + (s.x - S.fx) * k; P.y = S.fy + (s.y - S.fy) * k - Math.sin(k * Math.PI) * 60;
-    if (k >= 1) { S.phase = 'ride'; S.t = 0; sfx('whoosh'); }
+    if (k >= 1) {
+      S.phase = 'ride'; S.t = 0; sfx('whoosh');
+      if (!isAna) { bubble(P, 'Vamos, cavalo! Anda, cavalo!', 2.6); say('Vamos, cavalo! Anda, cavalo!', PITCH.cecilia); }
+    }
   } else if (S.phase === 'ride') {
     h.x += spd * dt; h.anim += dt * (isAna ? 9 : 15);
     // pulo por cima do lobo
@@ -717,7 +801,8 @@ function updateScene(dt) {
     P.x = S.fx + (tx - S.fx) * k; P.y = S.fy + (GY - S.fy) * k - Math.sin(k * Math.PI) * 50;
     if (k >= 1) {
       P.carried = false; P.y = GY; h.state = 'exit'; h.t = 0;
-      bubble(h, isAna ? 'Tchau, maninha!' : 'Tchau, Cecília!'); say(isAna ? 'Tchau, maninha!' : 'Tchau, Cecília!', isAna ? PITCH.ana : PITCH.dindo);
+      const bye = isAna ? 'Passamos por ele, maninha!' : 'Tchau, Cecília!';
+      bubble(h, bye, 2.6); say(bye, isAna ? PITCH.ana : PITCH.dindo);
       endScene();
     }
   }
@@ -761,14 +846,13 @@ function updateWolf(dt) {
       W.x -= 380 * dt; W.walk += dt * 11; W.moving = true;
       if (W.x <= W.tx) {
         W.state = 'block'; W.t = 0;
-        bubble(W, 'Hehe! Me dá essa cestinha!', 2.8); say('Rerrê! Me dá essa cestinha!', PITCH.wolf);
-        if (G.wolfIdx === 1) setTimeout(() => { if (G && wolfThreat(G.wolf) && !G.scene) { bubble(G.P, 'Aperta um botão de ajuda!', 2.6); say('Aperta um botão de ajuda!', PITCH.cecilia); } }, 3000);
+        bubble(W, 'Me dá os morangos!', 2.6); sfx('growl'); sayWolf('Me dá os morangos!');
       }
       break;
     case 'block': {
       const d = W.x - P.x;
       if (d > 200 && P.mode === 'free') { W.x -= 55 * dt; W.walk += dt * 5; W.moving = true; }
-      if (P.mode === 'free' && d < 128 && P.knock <= 0 && P.hurt <= 0) wolfGrab();
+      if (!G.scene && W.t > 1.4) openMenu();
       break;
     }
     case 'grab': if (W.t > 0.8) { W.state = 'block'; W.t = 0; } break;
@@ -777,18 +861,6 @@ function updateWolf(dt) {
     case 'leave': W.x -= 340 * dt; W.walk += dt * 11; W.moving = true; if (W.x < G.cam - 260) G.wolf = null; break;
   }
 }
-function wolfGrab() {
-  const W = G.wolf, P = G.P;
-  W.state = 'grab'; W.t = 0;
-  const n = Math.min(3, G.count);
-  G.count -= n; updateHud();
-  for (let i = 0; i < n; i++) G.drops.push({ x: P.x, y: P.y - 50, vx: -160 - i * 110 - Math.random() * 60, vy: -520 - Math.random() * 200, rot: 0 });
-  P.knock = 0.4; P.vx = -380; P.vy = -480; P.ground = false; P.hurt = 1.3;
-  sfx('bonk');
-  bubble(W, n ? 'Peguei uns morangos! Hehe!' : 'Grrr! Quero a cestinha!', 2.2);
-  if (!G.grabbedOnce) { G.grabbedOnce = true; bubble(P, 'Ai! Me ajuda!', 2); say('Ai! Me ajuda!', PITCH.cecilia); }
-}
-
 // ---------- Jogador ----------
 function updatePlayer(dt) {
   const P = G.P;
@@ -863,8 +935,8 @@ function updateFx(dt) {
 }
 
 // ---------- Loop ----------
-let lastReady = null;
 function update(dt) {
+  if (G.menu) return;          // tudo congelado enquanto a criança escolhe
   G.t += dt;
   if (G.scene) updateScene(dt);
   updatePlayer(dt);
@@ -874,8 +946,6 @@ function update(dt) {
   const target = G.finished ? HOUSE_X - VW * 0.5 + 40 : P.x - VW * 0.36;
   G.cam += (target - G.cam) * Math.min(1, dt * 5);
   G.cam = clamp(G.cam, 0, Math.max(0, LEVEL_END - VW));
-  const r = powerReady();
-  if (r !== lastReady) { lastReady = r; document.querySelectorAll('.power').forEach(b => b.classList.toggle('ready', r)); }
   $('pcec').style.left = (clamp(P.x / (HOUSE_X - 40), 0, 1) * 100) + '%';
 }
 function updateHud(force) { $('count').textContent = G.count; }
@@ -914,7 +984,9 @@ function render() {
     const carrying = P.carried && S;
     const run = h.state === 'exit' ? h.t > 0.6 : !(S && (S.phase === 'pick' || S.phase === 'drop'));
     shadow(h.x, h.kind === 'ana' ? 32 : 36, 0.18 * clamp(1 - (GY - h.y) / 300, 0.3, 1));
-    if (h.kind === 'dindo') {
+    if (h.kind === 'layla') {
+      drawLayla(h.x, h.y, 1, { anim: h.anim, run: true, bark: h.state === 'scene' });
+    } else if (h.kind === 'dindo') {
       drawDindo(h.x, h.y, 1, { anim: h.anim, run, stick: S && S.type === 'stick', carry: carrying, yell: S && S.type === 'stick', wave: h.state === 'exit' && h.t < 0.6 });
       if (carrying) drawCecilia(P.x, P.y, 1, cecOpts);
     } else {
@@ -973,8 +1045,6 @@ addEventListener('resize', resize);
 const isTouch = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 function applyInputMode() {
   document.body.classList.toggle('no-touch', !isTouch());
-  const names = { pw1: 'Dindo', pw2: 'Cavalinho', pw3: 'Ana' };
-  for (const id in names) $(id).querySelector('span').textContent = (isTouch() ? '' : id.slice(2) + ' · ') + names[id];
 }
 addEventListener('touchstart', () => { if (document.body.classList.contains('no-touch')) applyInputMode(); }, { passive: true });
 
@@ -988,7 +1058,8 @@ function startGame() {
     } catch (e) { }
   }
   newGame();
-  running = true; paused = false; lastReady = null;
+  running = true; paused = false; battleMusic = false;
+  $('battle').classList.add('hidden');
   $('start').classList.add('hidden'); $('end').classList.add('hidden'); $('pause').classList.add('hidden');
   $('hud').classList.remove('hidden'); $('controls').classList.remove('hidden');
   bubble(G.P, 'Vamos pra casa da Vovó!', 2.6);
